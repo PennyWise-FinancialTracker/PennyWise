@@ -1,0 +1,112 @@
+@page
+@{
+    ViewData["Title"] = "Transactions";
+}
+
+<section class="dashboard">
+    <div class="dashboard__header">
+        <div>
+            <span class="dashboard__eyebrow">Ledger View</span>
+            <h1>Transactions</h1>
+            <p>Search, filter, and review transaction activity across income and expenses.</p>
+        </div>
+        <div class="dashboard__action">March activity</div>
+    </div>
+
+    <section class="transactions-panel">
+        <div class="transactions-toolbar">
+            <div class="search-box">
+                <input type="text" value="" placeholder="Search transactions..." aria-label="Search transactions" />
+            </div>
+            <div class="filter-pills" aria-label="Transaction filters">
+                <span class="filter-pill is-active">All</span>
+                <span class="filter-pill">Income</span>
+                <span class="filter-pill">Expenses</span>
+            </div>
+        </div>
+
+        <table class="transactions-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th class="amount-cell">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>3/10/2026</td>
+                    <td>Grocery Shopping</td>
+                    <td><span class="table-tag table-tag--category">Food &amp; Dining</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$85.50</td>
+                </tr>
+                <tr>
+                    <td>3/9/2026</td>
+                    <td>Monthly Salary</td>
+                    <td><span class="table-tag table-tag--category">Income</span></td>
+                    <td><span class="table-tag table-tag--income">Income</span></td>
+                    <td class="amount-cell amount-cell--positive">+$5000.00</td>
+                </tr>
+                <tr>
+                    <td>3/8/2026</td>
+                    <td>Electric Bill</td>
+                    <td><span class="table-tag table-tag--category">Utilities</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$120.00</td>
+                </tr>
+                <tr>
+                    <td>3/7/2026</td>
+                    <td>Gas Station</td>
+                    <td><span class="table-tag table-tag--category">Transportation</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$45.00</td>
+                </tr>
+                <tr>
+                    <td>3/7/2026</td>
+                    <td>Restaurant Dinner</td>
+                    <td><span class="table-tag table-tag--category">Food &amp; Dining</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$68.00</td>
+                </tr>
+                <tr>
+                    <td>3/6/2026</td>
+                    <td>Online Shopping</td>
+                    <td><span class="table-tag table-tag--category">Shopping</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$230.00</td>
+                </tr>
+                <tr>
+                    <td>3/5/2026</td>
+                    <td>Gym Membership</td>
+                    <td><span class="table-tag table-tag--category">Health</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$50.00</td>
+                </tr>
+                <tr>
+                    <td>3/4/2026</td>
+                    <td>Freelance Project</td>
+                    <td><span class="table-tag table-tag--category">Income</span></td>
+                    <td><span class="table-tag table-tag--income">Income</span></td>
+                    <td class="amount-cell amount-cell--positive">+$800.00</td>
+                </tr>
+                <tr>
+                    <td>3/3/2026</td>
+                    <td>Netflix Subscription</td>
+                    <td><span class="table-tag table-tag--category">Entertainment</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$15.99</td>
+                </tr>
+                <tr>
+                    <td>3/2/2026</td>
+                    <td>Uber Ride</td>
+                    <td><span class="table-tag table-tag--category">Transportation</span></td>
+                    <td><span class="table-tag table-tag--expense">Expense</span></td>
+                    <td class="amount-cell">-$18.50</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</section>

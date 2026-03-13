@@ -24,7 +24,7 @@ public class SignupModel : PageModel
         }
 
         Message = $"Account created for {Input.Email}. You can sign in now.";
-        return RedirectToPage();
+        return RedirectToPage("/Auth/Login");
     }
 
     public class SignupInput

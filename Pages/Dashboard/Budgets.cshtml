@@ -1,0 +1,99 @@
+@page
+@{
+    ViewData["Title"] = "Budgets";
+}
+
+<section class="dashboard">
+    <div class="dashboard__header">
+        <div>
+            <span class="dashboard__eyebrow">Budget Tracking</span>
+            <h1>Budgets</h1>
+            <p>Monitor category limits, spot warning states early, and flag overspending immediately.</p>
+        </div>
+        <div class="dashboard__action">Monthly limits</div>
+    </div>
+
+    <div class="summary-strip">
+        <div class="summary-chip">
+            <div class="summary-chip__label">Budgeted</div>
+            <div class="summary-chip__value">$2,350</div>
+        </div>
+        <div class="summary-chip">
+            <div class="summary-chip__label">Spent</div>
+            <div class="summary-chip__value">$2,175</div>
+        </div>
+        <div class="summary-chip">
+            <div class="summary-chip__label">Remaining</div>
+            <div class="summary-chip__value">$175</div>
+        </div>
+    </div>
+
+    <section class="budget-panel">
+        <article class="budget-item">
+            <div class="budget-item__top">
+                <div>
+                    <div class="budget-item__title">Food &amp; Dining</div>
+                    <div class="budget-item__meta">$650 of $800</div>
+                </div>
+                <div class="budget-item__status budget-item__status--warn">81%</div>
+            </div>
+            <div class="progress-track"><div class="progress-bar progress-bar--warn" style="width:81%;"></div></div>
+        </article>
+
+        <article class="budget-item">
+            <div class="budget-item__top">
+                <div>
+                    <div class="budget-item__title">Transportation</div>
+                    <div class="budget-item__meta">$285 of $300</div>
+                </div>
+                <div class="budget-item__status budget-item__status--warn">95%</div>
+            </div>
+            <div class="progress-track"><div class="progress-bar progress-bar--warn" style="width:95%;"></div></div>
+        </article>
+
+        <article class="budget-item">
+            <div class="budget-item__top">
+                <div>
+                    <div class="budget-item__title">Shopping</div>
+                    <div class="budget-item__meta">$620 of $500</div>
+                </div>
+                <div class="budget-item__status budget-item__status--danger">100%</div>
+            </div>
+            <div class="progress-track"><div class="progress-bar progress-bar--danger" style="width:100%;"></div></div>
+            <div class="budget-alert">Over budget by $120.00</div>
+        </article>
+
+        <article class="budget-item">
+            <div class="budget-item__top">
+                <div>
+                    <div class="budget-item__title">Entertainment</div>
+                    <div class="budget-item__meta">$145 of $200</div>
+                </div>
+                <div class="budget-item__status budget-item__status--good">73%</div>
+            </div>
+            <div class="progress-track"><div class="progress-bar progress-bar--good" style="width:73%;"></div></div>
+        </article>
+
+        <article class="budget-item">
+            <div class="budget-item__top">
+                <div>
+                    <div class="budget-item__title">Utilities</div>
+                    <div class="budget-item__meta">$380 of $400</div>
+                </div>
+                <div class="budget-item__status budget-item__status--warn">95%</div>
+            </div>
+            <div class="progress-track"><div class="progress-bar progress-bar--warn" style="width:95%;"></div></div>
+        </article>
+
+        <article class="budget-item">
+            <div class="budget-item__top">
+                <div>
+                    <div class="budget-item__title">Health &amp; Fitness</div>
+                    <div class="budget-item__meta">$95 of $150</div>
+                </div>
+                <div class="budget-item__status budget-item__status--good">63%</div>
+            </div>
+            <div class="progress-track"><div class="progress-bar progress-bar--good" style="width:63%;"></div></div>
+        </article>
+    </section>
+</section>

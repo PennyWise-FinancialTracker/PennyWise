@@ -1,4 +1,14 @@
-﻿<!DOCTYPE html>
+@{
+    var currentPage = ViewContext.ActionDescriptor.RouteValues["page"] ?? string.Empty;
+    var isAuthPage = currentPage.StartsWith("/Auth", StringComparison.OrdinalIgnoreCase);
+    var isDashboardPage = !isAuthPage &&
+        !string.Equals(currentPage, "/Privacy", StringComparison.OrdinalIgnoreCase) &&
+        !string.Equals(currentPage, "/Error", StringComparison.OrdinalIgnoreCase);
+
+    string NavState(string page) =>
+        string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase) ? "app-nav__link is-active" : "app-nav__link";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,42 +19,51 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PennyWise.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Auth/Login">PennyWise</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Auth/Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Auth/Signup">Sign up</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
+<body class="@(isDashboardPage ? "dashboard-body" : "auth-body")">
+    <header class="app-header">
+        <nav class="app-shell">
+            <a class="app-brand" asp-page="/Dashboard/Overview">
+                <span class="app-brand__mark">$</span>
+                <span class="app-brand__text">PennyWise</span>
+            </a>
+
+            @if (isDashboardPage)
+            {
+                <div class="app-shell__menu">
+                    <a class="@NavState("/Dashboard/Overview")" asp-page="/Dashboard/Overview">Overview</a>
+                    <a class="@NavState("/Dashboard/Transactions")" asp-page="/Dashboard/Transactions">Transactions</a>
+                    <a class="@NavState("/Dashboard/Budgets")" asp-page="/Dashboard/Budgets">Budgets</a>
+                    <a class="@NavState("/Dashboard/Analytics")" asp-page="/Dashboard/Analytics">Analytics</a>
                 </div>
-            </div>
+
+                <div class="app-shell__actions">
+                    <a class="app-nav__link" asp-page="/Auth/Login">Logout</a>
+                </div>
+            }
+            else
+            {
+                <div class="app-shell__menu app-shell__menu--auth">
+                    <a class="@NavState("/Auth/Login")" asp-page="/Auth/Login">Login</a>
+                    <a class="@NavState("/Auth/Signup")" asp-page="/Auth/Signup">Sign up</a>
+                    <a class="@NavState("/Privacy")" asp-page="/Privacy">Privacy</a>
+                </div>
+            }
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - PennyWise - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
+    <main class="page-shell @(isDashboardPage ? "page-shell--dashboard" : "page-shell--auth")" role="main">
+        @RenderBody()
+    </main>
+
+    @if (!isDashboardPage)
+    {
+        <footer class="app-footer">
+            <div class="app-footer__inner">
+                <span>&copy; 2026 PennyWise</span>
+                <a asp-page="/Privacy">Privacy</a>
+            </div>
+        </footer>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

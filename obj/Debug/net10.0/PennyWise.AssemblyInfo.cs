@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PennyWise")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+64a3483dde101401a5affa70f03badf3da0da390")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+487de9b9cd94b4d7b0c116bd60c1f3a56bd9df6f")]
 [assembly: System.Reflection.AssemblyProductAttribute("PennyWise")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PennyWise")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

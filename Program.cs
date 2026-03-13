@@ -6,6 +6,10 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AddPageRoute("/Auth/Login", "");
     options.Conventions.AddPageRoute("/Auth/Login", "login");
     options.Conventions.AddPageRoute("/Auth/Signup", "signup");
+    options.Conventions.AddPageRoute("/Dashboard/Overview", "overview");
+    options.Conventions.AddPageRoute("/Dashboard/Transactions", "transactions");
+    options.Conventions.AddPageRoute("/Dashboard/Budgets", "budgets");
+    options.Conventions.AddPageRoute("/Dashboard/Analytics", "analytics");
 });
 
 var app = builder.Build();

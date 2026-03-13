@@ -24,8 +24,7 @@ public class LoginModel : PageModel
             return Page();
         }
 
-        Message = $"Welcome back, {Input.Email}!";
-        return RedirectToPage();
+        return RedirectToPage("/Dashboard/Overview");
     }
 
     public class LoginInput
