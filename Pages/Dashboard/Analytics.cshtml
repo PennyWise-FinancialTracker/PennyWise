@@ -1,4 +1,5 @@
 @page
+@model PennyWise.Pages.Dashboard.AnalyticsModel
 @{
     ViewData["Title"] = "Analytics";
 }
@@ -14,41 +15,17 @@
     </div>
 
     <div class="stats-grid">
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__label">Income Trend</span>
-                <span class="metric-card__trend metric-card__trend--good">+8.7%</span>
-            </div>
-            <div class="metric-card__value">$5,000</div>
-            <div class="metric-card__label">vs last month: $4,600</div>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__label">Expense Trend</span>
-                <span class="metric-card__trend metric-card__trend--bad">+16.1%</span>
-            </div>
-            <div class="metric-card__value">$3,600</div>
-            <div class="metric-card__label">vs last month: $3,100</div>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__label">Savings Rate</span>
-                <span class="metric-card__trend metric-card__trend--good">28.0%</span>
-            </div>
-            <div class="metric-card__value">28.0%</div>
-            <div class="metric-card__label">Of your total income</div>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__label">Best Month</span>
-                <span class="metric-card__trend metric-card__trend--good">June</span>
-            </div>
-            <div class="metric-card__value">$1,520</div>
-            <div class="metric-card__label">Highest projected savings</div>
-        </article>
+        @foreach (var m in Model.Metrics)
+        {
+            <article class="metric-card">
+                <div class="metric-card__top">
+                    <span class="metric-card__label">@m.Label</span>
+                    <span class="metric-card__trend metric-card__trend--@m.TrendDirection">@m.Trend</span>
+                </div>
+                <div class="metric-card__value">@m.Value</div>
+                <div class="metric-card__label">@m.Subtitle</div>
+            </article>
+        }
     </div>
 
     <div class="analytics-grid">
@@ -61,7 +38,7 @@
             </div>
 
             <svg class="line-chart" viewBox="0 0 920 360" role="img" aria-label="Six-month financial trend">
-                <rect x="0" y="0" width="920" height="360" fill="#fff" />
+                <rect class="chart-bg" x="0" y="0" width="920" height="360" />
                 <g stroke="#e7eaf2" stroke-width="1">
                     <line x1="70" y1="40" x2="880" y2="40" />
                     <line x1="70" y1="100" x2="880" y2="100" />
@@ -93,8 +70,8 @@
                     <circle cx="718" cy="154" r="5" />
                     <circle cx="880" cy="136" r="5" />
                 </g>
-                <rect x="720" y="150" width="140" height="94" rx="14" fill="#fff" stroke="#dde2ef" />
-                <text x="740" y="178" fill="#1b2b48" font-size="18" font-family="Nunito, Segoe UI, sans-serif">Apr</text>
+                <rect class="chart-tooltip-bg" x="720" y="150" width="140" height="94" rx="14" />
+                <text class="chart-tooltip-text" x="740" y="178" font-size="18" font-family="Nunito, Segoe UI, sans-serif">Apr</text>
                 <text x="740" y="204" fill="#14b8a6" font-size="16" font-family="Nunito, Segoe UI, sans-serif">Income : 4800</text>
                 <text x="740" y="232" fill="#4f46e5" font-size="16" font-family="Nunito, Segoe UI, sans-serif">Expenses : 3400</text>
                 <text x="740" y="260" fill="#9aa8f5" font-size="16" font-family="Nunito, Segoe UI, sans-serif">Savings : 1400</text>
@@ -123,36 +100,14 @@
                 </div>
             </div>
             <div class="donut-meta">
-                <div class="donut-row">
-                    <span class="donut-row__swatch" style="background:#14b8a6;"></span>
-                    <span>January</span>
-                    <strong>$1,050</strong>
-                </div>
-                <div class="donut-row">
-                    <span class="donut-row__swatch" style="background:#4f46e5;"></span>
-                    <span>February</span>
-                    <strong>$1,120</strong>
-                </div>
-                <div class="donut-row">
-                    <span class="donut-row__swatch" style="background:#9aa8f5;"></span>
-                    <span>March</span>
-                    <strong>$980</strong>
-                </div>
-                <div class="donut-row">
-                    <span class="donut-row__swatch" style="background:#f4a300;"></span>
-                    <span>April</span>
-                    <strong>$1,400</strong>
-                </div>
-                <div class="donut-row">
-                    <span class="donut-row__swatch" style="background:#ea4c89;"></span>
-                    <span>May</span>
-                    <strong>$1,260</strong>
-                </div>
-                <div class="donut-row">
-                    <span class="donut-row__swatch" style="background:#00a65a;"></span>
-                    <span>June</span>
-                    <strong>$1,520</strong>
-                </div>
+                @foreach (var s in Model.SavingsBreakdown)
+                {
+                    <div class="donut-row">
+                        <span class="donut-row__swatch" style="background:@s.Color;"></span>
+                        <span>@s.Month</span>
+                        <strong>@s.Amount.ToString("C0")</strong>
+                    </div>
+                }
             </div>
         </section>
     </div>

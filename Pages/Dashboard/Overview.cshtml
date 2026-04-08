@@ -1,4 +1,5 @@
 @page
+@model PennyWise.Pages.Dashboard.OverviewModel
 @{
     ViewData["Title"] = "Overview";
 }
@@ -10,53 +11,23 @@
             <h1>Overview Dashboard</h1>
             <p>Track income, expenses, savings, and recent activity from one high-level workspace.</p>
         </div>
-        <div class="dashboard__action">Updated March 12, 2026</div>
+        <div class="dashboard__action">@Model.LastUpdated</div>
     </div>
 
     <div class="stats-grid">
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__icon metric-card__icon--income">+</span>
-                <span class="metric-card__trend metric-card__trend--good">+12%</span>
-            </div>
-            <div>
-                <div class="metric-card__label">Total Income</div>
-                <div class="metric-card__value">$5,000</div>
-            </div>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__icon metric-card__icon--expense">-</span>
-                <span class="metric-card__trend metric-card__trend--bad">+8%</span>
-            </div>
-            <div>
-                <div class="metric-card__label">Total Expenses</div>
-                <div class="metric-card__value">$3,600</div>
-            </div>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__icon metric-card__icon--balance">=</span>
-                <span class="metric-card__trend">Current</span>
-            </div>
-            <div>
-                <div class="metric-card__label">Balance</div>
-                <div class="metric-card__value">$1,400</div>
-            </div>
-        </article>
-
-        <article class="metric-card">
-            <div class="metric-card__top">
-                <span class="metric-card__icon metric-card__icon--savings">S</span>
-                <span class="metric-card__trend metric-card__trend--good">+15%</span>
-            </div>
-            <div>
-                <div class="metric-card__label">Savings</div>
-                <div class="metric-card__value">$1,400</div>
-            </div>
-        </article>
+        @foreach (var m in Model.Metrics)
+        {
+            <article class="metric-card">
+                <div class="metric-card__top">
+                    <span class="metric-card__icon metric-card__icon--@m.IconStyle">@m.Icon</span>
+                    <span class="metric-card__trend @(string.IsNullOrEmpty(m.TrendDirection) ? "" : $"metric-card__trend--{m.TrendDirection}")">@m.Trend</span>
+                </div>
+                <div>
+                    <div class="metric-card__label">@m.Label</div>
+                    <div class="metric-card__value">@m.Value</div>
+                </div>
+            </article>
+        }
     </div>
 
     <div class="overview-grid">
@@ -74,7 +45,7 @@
             </div>
 
             <svg class="line-chart" viewBox="0 0 920 360" role="img" aria-label="Income and expenses over six months">
-                <rect x="0" y="0" width="920" height="360" fill="#fff" />
+                <rect class="chart-bg" x="0" y="0" width="920" height="360" />
                 <g stroke="#e7eaf2" stroke-width="1">
                     <line x1="70" y1="40" x2="880" y2="40" />
                     <line x1="70" y1="100" x2="880" y2="100" />
@@ -132,7 +103,7 @@
 
             <div class="donut-wrap">
                 <svg class="donut-chart" viewBox="0 0 220 220" role="img" aria-label="Spending by category">
-                    <circle cx="110" cy="110" r="68" fill="none" stroke="#eef1f7" stroke-width="28" />
+                    <circle class="donut-bg" cx="110" cy="110" r="68" fill="none" stroke-width="28" />
                     <circle cx="110" cy="110" r="68" fill="none" stroke="#4f46e5" stroke-width="28" stroke-linecap="round" stroke-dasharray="102 325" stroke-dashoffset="0" transform="rotate(-90 110 110)" />
                     <circle cx="110" cy="110" r="68" fill="none" stroke="#14b8a6" stroke-width="28" stroke-linecap="round" stroke-dasharray="52 375" stroke-dashoffset="-112" transform="rotate(-90 110 110)" />
                     <circle cx="110" cy="110" r="68" fill="none" stroke="#9aa8f5" stroke-width="28" stroke-linecap="round" stroke-dasharray="84 343" stroke-dashoffset="-172" transform="rotate(-90 110 110)" />
@@ -142,31 +113,14 @@
                 </svg>
 
                 <div class="donut-meta">
-                    <div class="donut-row">
-                        <span class="donut-row__swatch" style="background:#4f46e5;"></span>
-                        <span>Food &amp; Dining</span>
-                        <strong>$850</strong>
-                    </div>
-                    <div class="donut-row">
-                        <span class="donut-row__swatch" style="background:#14b8a6;"></span>
-                        <span>Transportation</span>
-                        <strong>$420</strong>
-                    </div>
-                    <div class="donut-row">
-                        <span class="donut-row__swatch" style="background:#9aa8f5;"></span>
-                        <span>Shopping</span>
-                        <strong>$680</strong>
-                    </div>
-                    <div class="donut-row">
-                        <span class="donut-row__swatch" style="background:#f4a300;"></span>
-                        <span>Utilities</span>
-                        <strong>$380</strong>
-                    </div>
-                    <div class="donut-row">
-                        <span class="donut-row__swatch" style="background:#ea4c89;"></span>
-                        <span>Entertainment</span>
-                        <strong>$270</strong>
-                    </div>
+                    @foreach (var cat in Model.SpendingCategories)
+                    {
+                        <div class="donut-row">
+                            <span class="donut-row__swatch" style="background:@cat.Color;"></span>
+                            <span>@cat.Name</span>
+                            <strong>@cat.Amount.ToString("C0")</strong>
+                        </div>
+                    }
                 </div>
             </div>
         </section>
@@ -177,61 +131,20 @@
             <h2>Recent Transactions</h2>
         </div>
         <div class="transaction-list">
-            <article class="transaction-item">
-                <div class="transaction-item__icon">C</div>
-                <div>
-                    <div class="transaction-item__title">Grocery Store</div>
-                    <div class="transaction-item__meta">Food &amp; Dining</div>
-                </div>
-                <div class="transaction-item__amount">
-                    $85.50
-                    <div class="transaction-item__when">Today</div>
-                </div>
-            </article>
-            <article class="transaction-item">
-                <div class="transaction-item__icon transaction-item__icon--income">I</div>
-                <div>
-                    <div class="transaction-item__title">Salary Deposit</div>
-                    <div class="transaction-item__meta">Income</div>
-                </div>
-                <div class="transaction-item__amount transaction-item__amount--positive">
-                    +$5000.00
-                    <div class="transaction-item__when">Yesterday</div>
-                </div>
-            </article>
-            <article class="transaction-item">
-                <div class="transaction-item__icon">U</div>
-                <div>
-                    <div class="transaction-item__title">Electric Bill</div>
-                    <div class="transaction-item__meta">Utilities</div>
-                </div>
-                <div class="transaction-item__amount">
-                    $120.00
-                    <div class="transaction-item__when">2 days ago</div>
-                </div>
-            </article>
-            <article class="transaction-item">
-                <div class="transaction-item__icon">T</div>
-                <div>
-                    <div class="transaction-item__title">Gas Station</div>
-                    <div class="transaction-item__meta">Transportation</div>
-                </div>
-                <div class="transaction-item__amount">
-                    $45.00
-                    <div class="transaction-item__when">3 days ago</div>
-                </div>
-            </article>
-            <article class="transaction-item">
-                <div class="transaction-item__icon">F</div>
-                <div>
-                    <div class="transaction-item__title">Restaurant</div>
-                    <div class="transaction-item__meta">Food &amp; Dining</div>
-                </div>
-                <div class="transaction-item__amount">
-                    $68.00
-                    <div class="transaction-item__when">3 days ago</div>
-                </div>
-            </article>
+            @foreach (var tx in Model.RecentTransactions)
+            {
+                <article class="transaction-item">
+                    <div class="transaction-item__icon @(tx.IsIncome ? "transaction-item__icon--income" : "")">@tx.IconLetter</div>
+                    <div>
+                        <div class="transaction-item__title">@tx.Title</div>
+                        <div class="transaction-item__meta">@tx.Category</div>
+                    </div>
+                    <div class="transaction-item__amount @(tx.IsIncome ? "transaction-item__amount--positive" : "")">
+                        @tx.Amount
+                        <div class="transaction-item__when">@tx.When</div>
+                    </div>
+                </article>
+            }
         </div>
     </section>
 </section>
