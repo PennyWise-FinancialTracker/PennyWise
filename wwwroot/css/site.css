@@ -110,10 +110,11 @@ a {
   max-width: 1400px;
   margin: 0 auto;
   padding: clamp(0.7rem, 0.5rem + 0.6vw, 0.9rem) clamp(0.85rem, 0.5rem + 1.6vw, 1.5rem);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: clamp(0.5rem, 0.25rem + 0.8vw, 1rem);
+  column-gap: clamp(0.5rem, 0.25rem + 0.8vw, 1rem);
+  row-gap: 0.6rem;
 }
 
 .app-brand {
@@ -156,7 +157,6 @@ a {
 }
 
 .app-shell__menu {
-  flex: 1 1 auto;
   min-width: 0;
   justify-content: center;
   flex-wrap: wrap;
@@ -921,17 +921,19 @@ a {
   }
 }
 
+@media (max-width: 920px) {
+  .app-shell:has(.app-shell__actions) {
+    grid-template-columns: 1fr auto;
+  }
+
+  .app-shell:has(.app-shell__actions) .app-shell__menu {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 820px) {
-  .app-shell {
-    flex-wrap: wrap;
-  }
-
-  .app-shell__menu {
-    order: 3;
-    width: 100%;
-    justify-content: flex-start;
-  }
-
   .page-shell--dashboard,
   .page-shell--auth {
     padding: 1rem;
