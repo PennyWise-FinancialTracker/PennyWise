@@ -163,7 +163,7 @@ a {
 
 .app-shell__menu {
   min-width: 0;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
@@ -182,11 +182,11 @@ a {
 }
 
 .app-nav__link {
-  padding: clamp(0.45rem, 0.3rem + 0.5vw, 0.8rem) clamp(0.5rem, 0.25rem + 0.8vw, 1.1rem);
+  padding: clamp(0.4rem, 0.25rem + 0.5vw, 0.8rem) clamp(0.4rem, 0.2rem + 0.7vw, 1.1rem);
   border-radius: 0.85rem;
   color: var(--pw-text);
   font-weight: 700;
-  font-size: clamp(0.8rem, 0.72rem + 0.25vw, 1rem);
+  font-size: clamp(0.75rem, 0.68rem + 0.25vw, 1rem);
   white-space: nowrap;
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
