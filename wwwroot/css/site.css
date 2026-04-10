@@ -188,6 +188,10 @@ a {
   font-weight: 700;
   font-size: clamp(0.75rem, 0.68rem + 0.25vw, 1rem);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 2.5rem;
+  flex-shrink: 1;
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
