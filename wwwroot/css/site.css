@@ -171,11 +171,11 @@ a {
 }
 
 .app-nav__link {
-  padding: clamp(0.55rem, 0.4rem + 0.5vw, 0.8rem) clamp(0.65rem, 0.45rem + 0.7vw, 1.1rem);
-  border-radius: 0.95rem;
+  padding: clamp(0.45rem, 0.3rem + 0.5vw, 0.8rem) clamp(0.5rem, 0.25rem + 0.8vw, 1.1rem);
+  border-radius: 0.85rem;
   color: var(--pw-text);
   font-weight: 700;
-  font-size: clamp(0.85rem, 0.78rem + 0.2vw, 1rem);
+  font-size: clamp(0.8rem, 0.72rem + 0.25vw, 1rem);
   white-space: nowrap;
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
@@ -921,15 +921,9 @@ a {
   }
 }
 
-@media (max-width: 920px) {
-  .app-shell:has(.app-shell__actions) {
-    grid-template-columns: 1fr auto;
-  }
-
-  .app-shell:has(.app-shell__actions) .app-shell__menu {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-content: center;
+@media (max-width: 720px) {
+  .app-brand__text {
+    display: none;
   }
 }
 
