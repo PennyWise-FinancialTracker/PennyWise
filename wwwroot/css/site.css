@@ -164,7 +164,13 @@ a {
 .app-shell__menu {
   min-width: 0;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.app-shell__menu::-webkit-scrollbar {
+  display: none;
 }
 
 .app-shell__actions {
@@ -933,17 +939,6 @@ a {
 }
 
 @media (max-width: 820px) {
-  .app-shell:has(.app-shell__actions) {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "brand menu"
-      "actions actions";
-  }
-
-  .app-shell:has(.app-shell__actions) .app-shell__actions {
-    justify-self: end;
-  }
-
   .page-shell--dashboard,
   .page-shell--auth {
     padding: 1rem;
