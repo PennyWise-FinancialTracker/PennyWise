@@ -932,12 +932,6 @@ a {
   }
 }
 
-@media (max-width: 720px) {
-  .app-brand__text {
-    display: none;
-  }
-}
-
 @media (max-width: 820px) {
   .page-shell--dashboard,
   .page-shell--auth {
