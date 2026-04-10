@@ -167,8 +167,6 @@ a {
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
-  mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
 }
 
 .app-shell__menu::-webkit-scrollbar {
