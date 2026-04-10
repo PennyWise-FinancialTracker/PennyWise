@@ -114,7 +114,7 @@ a {
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas: "brand menu actions";
   align-items: center;
-  column-gap: clamp(0.5rem, 0.25rem + 0.8vw, 1rem);
+  column-gap: clamp(0.75rem, 0.4rem + 1.1vw, 1.25rem);
   row-gap: 0.6rem;
 }
 
@@ -167,6 +167,8 @@ a {
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
 }
 
 .app-shell__menu::-webkit-scrollbar {
@@ -983,12 +985,16 @@ a {
 }
 
 .theme-toggle:hover {
-  background: rgba(79, 70, 229, 0.08);
+  background: rgba(79, 70, 229, 0.15);
+  border-color: rgba(79, 70, 229, 0.5);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2);
 }
 
 [data-theme="dark"] .theme-toggle:hover {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(129, 140, 248, 0.22);
+  border-color: rgba(165, 180, 252, 0.6);
+  box-shadow: 0 4px 14px rgba(129, 140, 248, 0.3);
 }
 
 .theme-toggle__icon {
