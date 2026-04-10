@@ -112,10 +112,15 @@ a {
   padding: clamp(0.7rem, 0.5rem + 0.6vw, 0.9rem) clamp(0.85rem, 0.5rem + 1.6vw, 1.5rem);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "brand menu actions";
   align-items: center;
   column-gap: clamp(0.5rem, 0.25rem + 0.8vw, 1rem);
   row-gap: 0.6rem;
 }
+
+.app-brand { grid-area: brand; }
+.app-shell__menu { grid-area: menu; }
+.app-shell__actions { grid-area: actions; }
 
 .app-brand {
   display: inline-flex;
@@ -928,6 +933,17 @@ a {
 }
 
 @media (max-width: 820px) {
+  .app-shell:has(.app-shell__actions) {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "brand menu"
+      "actions actions";
+  }
+
+  .app-shell:has(.app-shell__actions) .app-shell__actions {
+    justify-self: end;
+  }
+
   .page-shell--dashboard,
   .page-shell--auth {
     padding: 1rem;
