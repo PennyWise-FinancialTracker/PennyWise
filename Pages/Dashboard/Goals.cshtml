@@ -1,0 +1,101 @@
+@page
+@model PennyWise.Pages.Dashboard.GoalsModel
+@{
+    ViewData["Title"] = "Savings Goals";
+}
+
+<section class="dashboard">
+    <div class="dashboard__header">
+        <div>
+            <span class="dashboard__eyebrow">Savings Goals</span>
+            <h1>Goals</h1>
+            <p>Track emergency funds, vacations, big purchases, and long-term savings.</p>
+        </div>
+        <div class="dashboard__action">@Model.Goals.Count goals</div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-success" role="alert">@Model.Message</div>
+    }
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Add Goal</h2>
+                <p>Give every pile of future money a name.</p>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="Add" class="entry-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--goals">
+                <div>
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" placeholder="Emergency fund" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.CurrentAmount" class="form-label"></label>
+                    <input asp-for="Input.CurrentAmount" class="form-control" type="number" min="0" step="0.01" />
+                    <span asp-validation-for="Input.CurrentAmount" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.TargetAmount" class="form-label"></label>
+                    <input asp-for="Input.TargetAmount" class="form-control" type="number" min="0.01" step="0.01" />
+                    <span asp-validation-for="Input.TargetAmount" class="text-danger"></span>
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn login-btn">Add goal</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="budget-panel">
+        @if (Model.Goals.Count == 0)
+        {
+            <div class="empty-state">
+                <div>Set your first savings goal, like an emergency fund or vacation.</div>
+                <div class="empty-state__actions">
+                    <a href="#Input_Name" class="btn signup-btn">Set savings goal</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var goal in Model.Goals)
+            {
+                <article class="budget-item">
+                    <div class="budget-item__top">
+                        <div>
+                            <div class="budget-item__title">@goal.Name</div>
+                            <div class="budget-item__meta">@goal.CurrentAmount.ToString("C0") of @goal.TargetAmount.ToString("C0") - @goal.Remaining.ToString("C0") left</div>
+                        </div>
+                        <div class="budget-item__status budget-item__status--@(goal.Percentage >= 100 ? "good" : "warn")">@(goal.Percentage)%</div>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-bar progress-bar--good" style="width:0%;" data-width="@(goal.Percentage)%"></div>
+                    </div>
+                    <details class="row-actions">
+                        <summary>Edit goal</summary>
+                        <form method="post" asp-page-handler="Edit" class="inline-edit-form">
+                            <input type="hidden" name="id" value="@goal.Id" />
+                            <input class="form-control" name="name" value="@goal.Name" />
+                            <input class="form-control" type="number" min="0" step="0.01" name="currentAmount" value="@goal.CurrentAmount" />
+                            <input class="form-control" type="number" min="0.01" step="0.01" name="targetAmount" value="@goal.TargetAmount" />
+                            <button class="btn login-btn" type="submit">Save</button>
+                        </form>
+                        <form method="post" asp-page-handler="Delete" class="inline-delete-form">
+                            <input type="hidden" name="id" value="@goal.Id" />
+                            <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this savings goal?')">Delete</button>
+                        </form>
+                    </details>
+                </article>
+            }
+        }
+    </section>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

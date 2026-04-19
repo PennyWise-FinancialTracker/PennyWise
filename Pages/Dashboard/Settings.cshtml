@@ -1,0 +1,94 @@
+@page
+@model PennyWise.Pages.Dashboard.SettingsModel
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<section class="dashboard">
+    <div class="dashboard__header">
+        <div>
+            <span class="dashboard__eyebrow">Account Settings</span>
+            <h1>Settings</h1>
+            <p>Update profile details, currency, savings target, and password.</p>
+        </div>
+        <div class="dashboard__action">Profile</div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-success" role="alert">@Model.Message</div>
+    }
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Profile</h2>
+                <p>Your name, login email, display currency, and monthly savings goal.</p>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="Profile" class="entry-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--settings">
+                <div>
+                    <label asp-for="Profile.FullName" class="form-label"></label>
+                    <input asp-for="Profile.FullName" class="form-control" />
+                    <span asp-validation-for="Profile.FullName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Profile.Email" class="form-label"></label>
+                    <input asp-for="Profile.Email" class="form-control" />
+                    <span asp-validation-for="Profile.Email" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Profile.Currency" class="form-label"></label>
+                    <input asp-for="Profile.Currency" class="form-control" maxlength="8" placeholder="USD" />
+                    <span asp-validation-for="Profile.Currency" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Profile.MonthlySavingsGoal" class="form-label"></label>
+                    <input asp-for="Profile.MonthlySavingsGoal" class="form-control" type="number" min="0" step="0.01" />
+                    <span asp-validation-for="Profile.MonthlySavingsGoal" class="text-danger"></span>
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn login-btn">Save profile</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Password</h2>
+                <p>Change your account password.</p>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="Password" class="entry-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--settings">
+                <div>
+                    <label asp-for="Password.CurrentPassword" class="form-label"></label>
+                    <input asp-for="Password.CurrentPassword" class="form-control" />
+                    <span asp-validation-for="Password.CurrentPassword" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Password.NewPassword" class="form-label"></label>
+                    <input asp-for="Password.NewPassword" class="form-control" />
+                    <span asp-validation-for="Password.NewPassword" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Password.ConfirmPassword" class="form-label"></label>
+                    <input asp-for="Password.ConfirmPassword" class="form-control" />
+                    <span asp-validation-for="Password.ConfirmPassword" class="text-danger"></span>
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn signup-btn">Update password</button>
+                </div>
+            </div>
+        </form>
+    </section>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

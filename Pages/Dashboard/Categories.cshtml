@@ -1,0 +1,105 @@
+@page
+@model PennyWise.Pages.Dashboard.CategoriesModel
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<section class="dashboard">
+    <div class="dashboard__header">
+        <div>
+            <span class="dashboard__eyebrow">Category Management</span>
+            <h1>Categories</h1>
+            <p>Create your own labels for rent, subscriptions, pets, debt, travel, and anything else.</p>
+        </div>
+        <div class="dashboard__action">Custom labels</div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-success" role="alert">@Model.Message</div>
+    }
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Add Category</h2>
+                <p>Default categories stay available; custom categories belong to your account.</p>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="Add" class="entry-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--categories">
+                <div>
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" placeholder="Rent, Pets, Travel..." />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Icon" class="form-label"></label>
+                    <input asp-for="Input.Icon" class="form-control" maxlength="2" placeholder="R" />
+                    <span asp-validation-for="Input.Icon" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Color" class="form-label"></label>
+                    <input asp-for="Input.Color" class="form-control" type="text" placeholder="#4f46e5" />
+                    <span asp-validation-for="Input.Color" class="text-danger"></span>
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn login-btn">Add category</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="transactions-panel">
+        <table class="transactions-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Transactions</th>
+                    <th>Color</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model.Categories)
+                {
+                    <tr>
+                        <td><span class="table-tag table-tag--category">@category.Icon @category.Name</span></td>
+                        <td>@(category.IsDefault ? "Default" : "Custom")</td>
+                        <td>@category.TransactionCount</td>
+                        <td><span class="donut-row__swatch" style="background:@category.Color;"></span> @category.Color</td>
+                        <td>
+                            @if (category.IsDefault)
+                            {
+                                <span class="text-muted">Locked</span>
+                            }
+                            else
+                            {
+                                <details class="row-actions">
+                                    <summary>Edit</summary>
+                                    <form method="post" asp-page-handler="Edit" class="inline-edit-form">
+                                        <input type="hidden" name="id" value="@category.Id" />
+                                        <input class="form-control" name="name" value="@category.Name" />
+                                        <input class="form-control" name="icon" value="@category.Icon" maxlength="2" />
+                                        <input class="form-control" name="color" value="@category.Color" />
+                                        <button class="btn login-btn" type="submit">Save</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" class="inline-delete-form">
+                                        <input type="hidden" name="id" value="@category.Id" />
+                                        <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this category?')">Delete</button>
+                                    </form>
+                                </details>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

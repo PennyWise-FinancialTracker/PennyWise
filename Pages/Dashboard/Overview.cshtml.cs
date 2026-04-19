@@ -6,7 +6,7 @@ using PennyWise.Models;
 
 namespace PennyWise.Pages.Dashboard;
 
-public class OverviewModel : PageModel
+public class OverviewModel : DashboardPageModel
 {
     private readonly AppDbContext _db;
 
@@ -15,20 +15,23 @@ public class OverviewModel : PageModel
     public string LastUpdated { get; set; } = string.Empty;
     public List<MetricItem> Metrics { get; set; } = new();
     public List<SpendingCategory> SpendingCategories { get; set; } = new();
+    public FinancialTrendChart TrendChart { get; set; } = new();
+    public List<DonutSegment> SpendingSegments { get; set; } = new();
     public List<RecentTransaction> RecentTransactions { get; set; } = new();
 
     public async Task OnGetAsync()
     {
         LastUpdated = $"Updated {DateTime.Now:MMMM d, yyyy}";
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == DbInitializer.DemoUserEmail);
+        if (!TryGetCurrentUserId(out var userId)) return;
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return;
 
         var now = DateTime.UtcNow;
         var monthStart = new DateTime(now.Year, now.Month, 1);
 
         var monthTxns = await _db.Transactions
-            .Where(t => t.UserId == user.Id && t.Date >= monthStart)
+            .Where(t => t.UserId == userId && t.Date >= monthStart)
             .Include(t => t.Category)
             .ToListAsync();
 
@@ -36,13 +39,16 @@ public class OverviewModel : PageModel
         var expenses = monthTxns.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount);
         var balance = income - expenses;
         var savings = balance > 0 ? balance : 0m;
+        var savingsTrend = user.MonthlySavingsGoal > 0
+            ? $"{Math.Min(100, Math.Round(savings / user.MonthlySavingsGoal * 100))}% of goal"
+            : "This month";
 
         Metrics = new List<MetricItem>
         {
             new() { Label = "Total Income",   Value = FormatMoney(income),   Trend = "This month", TrendDirection = "good", Icon = "+", IconStyle = "income" },
             new() { Label = "Total Expenses", Value = FormatMoney(expenses), Trend = "This month", TrendDirection = "bad",  Icon = "-", IconStyle = "expense" },
             new() { Label = "Balance",        Value = FormatMoney(balance),  Trend = "Current",    TrendDirection = "",     Icon = "=", IconStyle = "balance" },
-            new() { Label = "Savings",        Value = FormatMoney(savings),  Trend = "This month", TrendDirection = "good", Icon = "S", IconStyle = "savings" },
+            new() { Label = "Savings",        Value = FormatMoney(savings),  Trend = savingsTrend, TrendDirection = "good", Icon = "S", IconStyle = "savings" },
         };
 
         SpendingCategories = monthTxns
@@ -50,6 +56,7 @@ public class OverviewModel : PageModel
             .GroupBy(t => t.Category!)
             .Select(g => new SpendingCategory
             {
+                CategoryId = g.Key.Id,
                 Name = g.Key.Name,
                 Color = g.Key.Color,
                 Amount = g.Sum(t => t.Amount),
@@ -58,8 +65,12 @@ public class OverviewModel : PageModel
             .Take(5)
             .ToList();
 
+        var monthlyTrends = await LoadMonthlyTrendsAsync(_db, userId);
+        TrendChart = DashboardCharts.BuildTrendChart(monthlyTrends);
+        SpendingSegments = DashboardCharts.BuildDonutSegments(SpendingCategories);
+
         var recent = await _db.Transactions
-            .Where(t => t.UserId == user.Id)
+            .Where(t => t.UserId == userId)
             .Include(t => t.Category)
             .OrderByDescending(t => t.Date)
             .Take(5)

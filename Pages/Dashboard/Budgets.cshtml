@@ -9,10 +9,83 @@
         <div>
             <span class="dashboard__eyebrow">Budget Tracking</span>
             <h1>Budgets</h1>
-            <p>Monitor category limits, spot warning states early, and flag overspending immediately.</p>
+            <p>Create, update, and remove monthly category limits.</p>
         </div>
-        <div class="dashboard__action">Monthly limits</div>
+        <div class="dashboard__action">@Model.Month/@Model.Year</div>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-success" role="alert">@Model.Message</div>
+    }
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Budget Month</h2>
+                <p>Review a specific month and year.</p>
+            </div>
+        </div>
+        <form method="get" class="entry-form">
+            <div class="form-grid form-grid--month">
+                <div>
+                    <label asp-for="Month" class="form-label"></label>
+                    <input asp-for="Month" class="form-control" type="number" min="1" max="12" />
+                </div>
+                <div>
+                    <label asp-for="Year" class="form-label"></label>
+                    <input asp-for="Year" class="form-control" type="number" min="2000" max="2100" />
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn signup-btn">View month</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Set Budget</h2>
+                <p>Create or update a monthly category limit.</p>
+            </div>
+        </div>
+
+        <form method="post" asp-page-handler="Save" class="entry-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--budgets">
+                <div>
+                    <label asp-for="Input.CategoryId" class="form-label">Category</label>
+                    <select asp-for="Input.CategoryId" class="form-control">
+                        <option value="">Choose category</option>
+                        @foreach (var category in Model.CategoryOptions)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.CategoryId" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.MonthlyLimit" class="form-label"></label>
+                    <input asp-for="Input.MonthlyLimit" class="form-control" type="number" min="0.01" step="0.01" placeholder="0.00" />
+                    <span asp-validation-for="Input.MonthlyLimit" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Month" class="form-label"></label>
+                    <input asp-for="Input.Month" class="form-control" type="number" min="1" max="12" />
+                    <span asp-validation-for="Input.Month" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Year" class="form-label"></label>
+                    <input asp-for="Input.Year" class="form-control" type="number" min="2000" max="2100" />
+                    <span asp-validation-for="Input.Year" class="text-danger"></span>
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn login-btn">Save budget</button>
+                </div>
+            </div>
+        </form>
+    </section>
 
     <div class="summary-strip">
         <div class="summary-chip">
@@ -30,24 +103,52 @@
     </div>
 
     <section class="budget-panel">
-        @foreach (var b in Model.BudgetItems)
+        @if (Model.BudgetItems.Count == 0)
         {
-            <article class="budget-item">
-                <div class="budget-item__top">
-                    <div>
-                        <div class="budget-item__title">@b.Title</div>
-                        <div class="budget-item__meta">@b.Spent.ToString("C0") of @b.Limit.ToString("C0")</div>
+            <div class="empty-state">
+                <div>Create your first monthly budget to start tracking category limits.</div>
+                <div class="empty-state__actions">
+                    <a href="#Input_CategoryId" class="btn signup-btn">Create first budget</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var b in Model.BudgetItems)
+            {
+                <article class="budget-item">
+                    <div class="budget-item__top">
+                        <div>
+                            <div class="budget-item__title">@b.Title</div>
+                            <div class="budget-item__meta">@b.Spent.ToString("C0") of @b.Limit.ToString("C0")</div>
+                        </div>
+                        <div class="budget-item__status budget-item__status--@b.Status">
+                            @(b.Percentage)%
+                            <a class="budget-item__link" asp-page="/Dashboard/Transactions" asp-route-Month="@b.Month" asp-route-Year="@b.Year" asp-route-Filter.CategoryId="@b.CategoryId" asp-route-Filter.Type="Expense">View spending</a>
+                        </div>
                     </div>
-                    <div class="budget-item__status budget-item__status--@b.Status">@(b.Percentage)%</div>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-bar progress-bar--@b.Status" style="width:0%;" data-width="@(b.Percentage)%"></div>
-                </div>
-                @if (b.OverAmount > 0)
-                {
-                    <div class="budget-alert">Over budget by @b.OverAmount.ToString("C2")</div>
-                }
-            </article>
+                    <div class="progress-track">
+                        <div class="progress-bar progress-bar--@b.Status" style="width:0%;" data-width="@(b.Percentage)%"></div>
+                    </div>
+                    <div class="budget-alert budget-alert--@b.Status">@b.AlertMessage</div>
+                    <details class="row-actions">
+                        <summary>Edit budget</summary>
+                        <form method="post" asp-page-handler="Edit" class="inline-edit-form">
+                            <input type="hidden" name="id" value="@b.Id" />
+                            <input class="form-control" type="number" min="0.01" step="0.01" name="monthlyLimit" value="@b.Limit" />
+                            <button class="btn login-btn" type="submit">Save</button>
+                        </form>
+                        <form method="post" asp-page-handler="Delete" class="inline-delete-form">
+                            <input type="hidden" name="id" value="@b.Id" />
+                            <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this budget?')">Delete</button>
+                        </form>
+                    </details>
+                </article>
+            }
         }
     </section>
 </section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

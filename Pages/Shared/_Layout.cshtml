@@ -39,7 +39,11 @@
                     <a class="@NavState("/Dashboard/Overview")" asp-page="/Dashboard/Overview">Overview</a>
                     <a class="@NavState("/Dashboard/Transactions")" asp-page="/Dashboard/Transactions">Transactions</a>
                     <a class="@NavState("/Dashboard/Budgets")" asp-page="/Dashboard/Budgets">Budgets</a>
+                    <a class="@NavState("/Dashboard/Categories")" asp-page="/Dashboard/Categories">Categories</a>
+                    <a class="@NavState("/Dashboard/Recurring")" asp-page="/Dashboard/Recurring">Recurring</a>
+                    <a class="@NavState("/Dashboard/Goals")" asp-page="/Dashboard/Goals">Goals</a>
                     <a class="@NavState("/Dashboard/Analytics")" asp-page="/Dashboard/Analytics">Analytics</a>
+                    <a class="@NavState("/Dashboard/Settings")" asp-page="/Dashboard/Settings">Settings</a>
                 </div>
 
                 <div class="app-shell__actions">
@@ -47,7 +51,7 @@
                         <span class="theme-toggle__icon theme-toggle__icon--light">&#9788;</span>
                         <span class="theme-toggle__icon theme-toggle__icon--dark">&#9790;</span>
                     </button>
-                    <a class="app-nav__link" asp-page="/Auth/Login">Logout</a>
+                    <a class="app-nav__link" href="/logout">Logout</a>
                 </div>
             }
             else

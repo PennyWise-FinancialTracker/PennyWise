@@ -1,5 +1,6 @@
 @page
 @model PennyWise.Pages.Dashboard.TransactionsModel
+@using PennyWise.Data.Entities
 @{
     ViewData["Title"] = "Transactions";
 }
@@ -9,22 +10,320 @@
         <div>
             <span class="dashboard__eyebrow">Ledger View</span>
             <h1>Transactions</h1>
-            <p>Search, filter, and review transaction activity across income and expenses.</p>
+            <p>Add, import, search, and correct income or spending activity.</p>
         </div>
-        <div class="dashboard__action">@Model.Period</div>
+        <div class="dashboard__action month-switcher" aria-label="Transaction month">
+            <a asp-page="/Dashboard/Transactions" asp-all-route-data="Model.PreviousMonthRoute" class="month-switcher__button">Prev</a>
+            <span class="month-switcher__label">@Model.MonthLabel</span>
+            <a asp-page="/Dashboard/Transactions" asp-all-route-data="Model.NextMonthRoute" class="month-switcher__button">Next</a>
+        </div>
     </div>
 
-    <section class="transactions-panel">
-        <div class="transactions-toolbar">
-            <div class="search-box">
-                <input type="text" value="" placeholder="Search transactions..." aria-label="Search transactions" />
-            </div>
-            <div class="filter-pills" aria-label="Transaction filters">
-                <span class="filter-pill is-active">All</span>
-                <span class="filter-pill">Income</span>
-                <span class="filter-pill">Expenses</span>
+    @if (!string.IsNullOrWhiteSpace(Model.Message) || !string.IsNullOrWhiteSpace(Model.PageMessage))
+    {
+        <div class="alert alert-success" role="alert">@(Model.Message ?? Model.PageMessage)</div>
+    }
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Add Transaction</h2>
+                <p>Save income and expenses to your ledger.</p>
             </div>
         </div>
+
+        <form method="post" asp-page-handler="Add" class="entry-form">
+            <input type="hidden" asp-for="Month" />
+            <input type="hidden" asp-for="Year" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--transactions">
+                <div>
+                    <label asp-for="Input.Date" class="form-label"></label>
+                    <input asp-for="Input.Date" class="form-control" type="date" />
+                    <span asp-validation-for="Input.Date" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Description" class="form-label"></label>
+                    <input asp-for="Input.Description" class="form-control" placeholder="Coffee, paycheck, groceries..." />
+                    <span asp-validation-for="Input.Description" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.CategoryId" class="form-label">Category</label>
+                    <select asp-for="Input.CategoryId" class="form-control">
+                        <option value="">Choose category</option>
+                        @foreach (var category in Model.CategoryOptions)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.CategoryId" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Type" class="form-label"></label>
+                    <select asp-for="Input.Type" class="form-control">
+                        <option value="@TransactionType.Expense">Expense</option>
+                        <option value="@TransactionType.Income">Income</option>
+                    </select>
+                    <span asp-validation-for="Input.Type" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Amount" class="form-label"></label>
+                    <input asp-for="Input.Amount" class="form-control" type="number" min="0.01" step="0.01" placeholder="0.00" />
+                    <span asp-validation-for="Input.Amount" class="text-danger"></span>
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn login-btn">Add transaction</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Import Bank Statement</h2>
+                <p>Upload a text-based PDF statement or a bank CSV export. Review detected transactions before anything is saved.</p>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="Import" enctype="multipart/form-data" class="entry-form">
+            <input type="hidden" asp-for="Month" />
+            <input type="hidden" asp-for="Year" />
+            <div class="form-grid form-grid--import">
+                <div>
+                    <label for="statementFile" class="form-label">Bank PDF or CSV</label>
+                    <input id="statementFile" name="statementFile" class="form-control" type="file" accept=".pdf,.csv,application/pdf,text/csv" />
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn signup-btn">Import statement</button>
+                </div>
+            </div>
+        </form>
+        <datalist id="categoryNameOptions">
+            @foreach (var category in Model.CategoryOptions)
+            {
+                <option value="@category.Name"></option>
+            }
+        </datalist>
+    </section>
+
+    @if (Model.ImportRows.Count > 0 || Model.ImportSummary is not null)
+    {
+        <section class="data-entry-panel import-review-panel">
+            <div class="panel__header">
+                <div>
+                    <h2>Review Import</h2>
+                    <p>Edit anything that looks off, approve recurring guesses, then save selected rows.</p>
+                </div>
+            </div>
+
+            @if (Model.ImportSummary is not null)
+            {
+                <div class="import-summary-grid">
+                    <div class="summary-chip">
+                        <div class="summary-chip__label">Detected</div>
+                        <div class="summary-chip__value">@Model.ImportSummary.Detected</div>
+                    </div>
+                    <div class="summary-chip">
+                        <div class="summary-chip__label">Skipped</div>
+                        <div class="summary-chip__value">@Model.ImportSummary.Skipped</div>
+                    </div>
+                    <div class="summary-chip">
+                        <div class="summary-chip__label">Possible duplicates</div>
+                        <div class="summary-chip__value">@Model.ImportSummary.Duplicates</div>
+                    </div>
+                    <div class="summary-chip">
+                        <div class="summary-chip__label">Needs review</div>
+                        <div class="summary-chip__value">@Model.ImportSummary.NeedsReview</div>
+                    </div>
+                    <div class="summary-chip">
+                        <div class="summary-chip__label">Recurring guesses</div>
+                        <div class="summary-chip__value">@Model.ImportSummary.RecurringCandidates</div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.ImportRows.Count == 0)
+            {
+                <div class="empty-state">No importable rows were found in that file.</div>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="ConfirmImport" class="entry-form import-review-form">
+                    <input type="hidden" asp-for="Month" />
+                    <input type="hidden" asp-for="Year" />
+                    <div class="table-scroll">
+                        <table class="transactions-table import-review-table">
+                            <thead>
+                                <tr>
+                                    <th>Import</th>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Type</th>
+                                    <th class="amount-cell">Amount</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var i = 0; i < Model.ImportRows.Count; i++)
+                                {
+                                    <tr class="@(Model.ImportRows[i].NeedsReview ? "review-row--warn" : "")">
+                                        <td>
+                                            <input type="hidden" asp-for="ImportRows[i].RowNumber" />
+                                            <input type="hidden" asp-for="ImportRows[i].IsDuplicate" />
+                                            <input type="hidden" asp-for="ImportRows[i].NeedsReview" />
+                                            <input type="hidden" asp-for="ImportRows[i].Note" />
+                                            <label class="form-check">
+                                                <input asp-for="ImportRows[i].Selected" class="form-check-input" />
+                                                <span>Use</span>
+                                            </label>
+                                        </td>
+                                        <td><input asp-for="ImportRows[i].Date" class="form-control" type="date" /></td>
+                                        <td><input asp-for="ImportRows[i].Description" class="form-control" /></td>
+                                        <td><input asp-for="ImportRows[i].CategoryName" class="form-control" list="categoryNameOptions" /></td>
+                                        <td>
+                                            <select asp-for="ImportRows[i].Type" class="form-control">
+                                                <option value="@TransactionType.Expense">Expense</option>
+                                                <option value="@TransactionType.Income">Income</option>
+                                            </select>
+                                        </td>
+                                        <td><input asp-for="ImportRows[i].Amount" class="form-control amount-input" type="number" min="0.01" step="0.01" /></td>
+                                        <td>
+                                            @if (Model.ImportRows[i].IsDuplicate)
+                                            {
+                                                <span class="table-tag table-tag--expense">Duplicate</span>
+                                            }
+                                            @if (Model.ImportRows[i].NeedsReview)
+                                            {
+                                                <span class="table-tag table-tag--category">Review</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.ImportRows[i].Note))
+                                            {
+                                                <div class="text-muted">@Model.ImportRows[i].Note</div>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.RecurringCandidates.Count > 0)
+                    {
+                        <div class="recurring-review">
+                            <div class="panel__header">
+                                <div>
+                                    <h2>Recurring Guesses</h2>
+                                    <p>Approve monthly patterns PennyWise found across your history and this statement.</p>
+                                </div>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="transactions-table import-review-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Add</th>
+                                            <th>Description</th>
+                                            <th>Category</th>
+                                            <th>Type</th>
+                                            <th>Day</th>
+                                            <th class="amount-cell">Amount</th>
+                                            <th>Seen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (var i = 0; i < Model.RecurringCandidates.Count; i++)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input type="hidden" asp-for="RecurringCandidates[i].LastGeneratedYear" />
+                                                    <input type="hidden" asp-for="RecurringCandidates[i].LastGeneratedMonth" />
+                                                    <input type="hidden" asp-for="RecurringCandidates[i].Occurrences" />
+                                                    <label class="form-check">
+                                                        <input asp-for="RecurringCandidates[i].Selected" class="form-check-input" />
+                                                        <span>Add</span>
+                                                    </label>
+                                                </td>
+                                                <td><input asp-for="RecurringCandidates[i].Description" class="form-control" /></td>
+                                                <td><input asp-for="RecurringCandidates[i].CategoryName" class="form-control" list="categoryNameOptions" /></td>
+                                                <td>
+                                                    <select asp-for="RecurringCandidates[i].Type" class="form-control">
+                                                        <option value="@TransactionType.Expense">Expense</option>
+                                                        <option value="@TransactionType.Income">Income</option>
+                                                    </select>
+                                                </td>
+                                                <td><input asp-for="RecurringCandidates[i].DayOfMonth" class="form-control" type="number" min="1" max="31" /></td>
+                                                <td><input asp-for="RecurringCandidates[i].Amount" class="form-control amount-input" type="number" min="0.01" step="0.01" /></td>
+                                                <td>@Model.RecurringCandidates[i].Occurrences months</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="entry-form__action">
+                        <button type="submit" class="btn login-btn">Import selected</button>
+                        <a asp-page="/Dashboard/Transactions" asp-route-Month="@Model.Month" asp-route-Year="@Model.Year" class="btn signup-btn">Cancel</a>
+                    </div>
+                </form>
+            }
+        </section>
+    }
+
+    <section class="transactions-panel transactions-panel--cards">
+        <form method="get" class="transactions-toolbar transactions-toolbar--filters">
+            <input type="hidden" asp-for="Month" />
+            <input type="hidden" asp-for="Year" />
+            <input type="hidden" name="Filter.Page" value="1" />
+            <input type="hidden" asp-for="Filter.PageSize" />
+            <div class="filter-field filter-field--search search-box">
+                <label asp-for="Filter.Search" class="form-label">Search</label>
+                <input asp-for="Filter.Search" value="@Model.Filter.Search" placeholder="Description or category" aria-label="Search transactions" />
+            </div>
+            <div class="filter-field">
+                <label asp-for="Filter.CategoryId" class="form-label">Category</label>
+                <select asp-for="Filter.CategoryId" class="form-control">
+                    <option value="">All categories</option>
+                    @foreach (var category in Model.CategoryOptions)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-field">
+                <label asp-for="Filter.Type" class="form-label">Type</label>
+                <select asp-for="Filter.Type" class="form-control">
+                    <option value="">All types</option>
+                    <option value="@TransactionType.Income">Income</option>
+                    <option value="@TransactionType.Expense">Expense</option>
+                </select>
+            </div>
+            <div class="filter-range filter-range--dates">
+                <div class="filter-field">
+                    <label asp-for="Filter.DateFrom" class="form-label">From</label>
+                    <input asp-for="Filter.DateFrom" class="form-control" type="date" />
+                </div>
+                <div class="filter-field">
+                    <label asp-for="Filter.DateTo" class="form-label">To</label>
+                    <input asp-for="Filter.DateTo" class="form-control" type="date" />
+                </div>
+            </div>
+            <div class="filter-field">
+                <label asp-for="Filter.Sort" class="form-label">Sort</label>
+                <select asp-for="Filter.Sort" class="form-control">
+                    <option value="date_desc">Newest</option>
+                    <option value="date_asc">Oldest</option>
+                    <option value="amount_desc">Highest amount</option>
+                    <option value="amount_asc">Lowest amount</option>
+                    <option value="description_asc">A-Z description</option>
+                </select>
+            </div>
+            <div class="entry-form__action filter-actions">
+                <button type="submit" class="btn login-btn">Apply</button>
+                <a asp-page="/Dashboard/Transactions" class="btn signup-btn">Reset</a>
+            </div>
+        </form>
 
         <table class="transactions-table">
             <thead>
@@ -34,44 +333,181 @@
                     <th>Category</th>
                     <th>Type</th>
                     <th class="amount-cell">Amount</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var tx in Model.Transactions)
+                @if (Model.Transactions.Count == 0)
                 {
                     <tr>
-                        <td>@tx.Date</td>
-                        <td>@tx.Description</td>
-                        <td><span class="table-tag table-tag--category">@tx.Category</span></td>
-                        <td>
-                            <span class="table-tag @(tx.IsIncome ? "table-tag--income" : "table-tag--expense")">
-                                @(tx.IsIncome ? "Income" : "Expense")
-                            </span>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div>Add your first transaction or upload a statement to wake up the dashboard.</div>
+                                <div class="empty-state__actions">
+                                    <a href="#statementFile" class="btn signup-btn">Upload statement</a>
+                                </div>
+                            </div>
                         </td>
-                        <td class="amount-cell @(tx.IsIncome ? "amount-cell--positive" : "")">@tx.Amount</td>
                     </tr>
+                }
+                else
+                {
+                    @foreach (var tx in Model.Transactions)
+                    {
+                        <tr>
+                            <td>@tx.Date</td>
+                            <td>@tx.Description</td>
+                            <td><span class="table-tag table-tag--category">@tx.Category</span></td>
+                            <td>
+                                <span class="table-tag @(tx.IsIncome ? "table-tag--income" : "table-tag--expense")">
+                                    @(tx.IsIncome ? "Income" : "Expense")
+                                </span>
+                            </td>
+                            <td class="amount-cell @(tx.IsIncome ? "amount-cell--positive" : "")">@tx.Amount</td>
+                            <td>
+                                <details class="row-actions">
+                                    <summary>Edit</summary>
+                                    <form method="post" asp-page-handler="Edit" class="inline-edit-form">
+                                        <input type="hidden" name="id" value="@tx.Id" />
+                                        <input type="hidden" name="Month" value="@Model.Month" />
+                                        <input type="hidden" name="Year" value="@Model.Year" />
+                                        <input class="form-control" type="date" name="date" value="@tx.RawDate.ToString("yyyy-MM-dd")" />
+                                        <input class="form-control" name="description" value="@tx.Description" />
+                                        <select class="form-control" name="categoryId">
+                                            @foreach (var category in Model.CategoryOptions)
+                                            {
+                                                <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
+                                            }
+                                        </select>
+                                        <select class="form-control" name="type">
+                                            <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
+                                            <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
+                                        </select>
+                                        <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                        <button class="btn login-btn" type="submit">Save</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" class="inline-delete-form">
+                                        <input type="hidden" name="id" value="@tx.Id" />
+                                        <input type="hidden" name="Month" value="@Model.Month" />
+                                        <input type="hidden" name="Year" value="@Model.Year" />
+                                        <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this transaction?')">Delete</button>
+                                    </form>
+                                </details>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
 
-        @* Mobile card layout (hidden on desktop, shown on small screens) *@
         <div class="transactions-cards">
-            @foreach (var tx in Model.Transactions)
+            @if (Model.Transactions.Count == 0)
             {
-                <div class="transaction-card">
-                    <div class="transaction-card__top">
-                        <span class="transaction-card__desc">@tx.Description</span>
-                        <span class="transaction-card__amount @(tx.IsIncome ? "amount-cell--positive" : "")">@tx.Amount</span>
-                    </div>
-                    <div class="transaction-card__bottom">
-                        <span class="transaction-card__date">@tx.Date</span>
-                        <span class="table-tag table-tag--category">@tx.Category</span>
-                        <span class="table-tag @(tx.IsIncome ? "table-tag--income" : "table-tag--expense")">
-                            @(tx.IsIncome ? "Income" : "Expense")
-                        </span>
+                <div class="empty-state">
+                    <div>Add your first transaction or upload a statement to wake up the dashboard.</div>
+                    <div class="empty-state__actions">
+                        <a href="#statementFile" class="btn signup-btn">Upload statement</a>
                     </div>
                 </div>
             }
+            else
+            {
+                @foreach (var tx in Model.Transactions)
+                {
+                    <div class="transaction-card">
+                        <div class="transaction-card__top">
+                            <span class="transaction-card__desc">@tx.Description</span>
+                            <span class="transaction-card__amount @(tx.IsIncome ? "amount-cell--positive" : "")">@tx.Amount</span>
+                        </div>
+                        <div class="transaction-card__bottom">
+                            <span class="transaction-card__date">@tx.Date</span>
+                            <span class="table-tag table-tag--category">@tx.Category</span>
+                            <span class="table-tag @(tx.IsIncome ? "table-tag--income" : "table-tag--expense")">
+                                @(tx.IsIncome ? "Income" : "Expense")
+                            </span>
+                        </div>
+                        <details class="row-actions">
+                            <summary>Edit</summary>
+                            <form method="post" asp-page-handler="Edit" class="inline-edit-form">
+                                <input type="hidden" name="id" value="@tx.Id" />
+                                <input type="hidden" name="Month" value="@Model.Month" />
+                                <input type="hidden" name="Year" value="@Model.Year" />
+                                <input class="form-control" type="date" name="date" value="@tx.RawDate.ToString("yyyy-MM-dd")" />
+                                <input class="form-control" name="description" value="@tx.Description" />
+                                <select class="form-control" name="categoryId">
+                                    @foreach (var category in Model.CategoryOptions)
+                                    {
+                                        <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
+                                    }
+                                </select>
+                                <select class="form-control" name="type">
+                                    <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
+                                    <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
+                                </select>
+                                <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                <button class="btn login-btn" type="submit">Save</button>
+                            </form>
+                            <form method="post" asp-page-handler="Delete" class="inline-delete-form">
+                                <input type="hidden" name="id" value="@tx.Id" />
+                                <input type="hidden" name="Month" value="@Model.Month" />
+                                <input type="hidden" name="Year" value="@Model.Year" />
+                                <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this transaction?')">Delete</button>
+                            </form>
+                        </details>
+                    </div>
+                }
+            }
         </div>
+
+        @if (Model.TotalTransactions > 0)
+        {
+            <div class="pagination-bar">
+                <div class="pagination-bar__summary">
+                    Showing @Model.ShowingFrom-@Model.ShowingTo of @Model.TotalTransactions
+                </div>
+                <form method="get" class="pagination-size-form">
+                    <input type="hidden" asp-for="Month" />
+                    <input type="hidden" asp-for="Year" />
+                    <input type="hidden" asp-for="Filter.Search" />
+                    <input type="hidden" asp-for="Filter.CategoryId" />
+                    <input type="hidden" asp-for="Filter.Type" />
+                    <input type="hidden" asp-for="Filter.DateFrom" />
+                    <input type="hidden" asp-for="Filter.DateTo" />
+                    <input type="hidden" asp-for="Filter.Sort" />
+                    <input type="hidden" name="Filter.Page" value="1" />
+                    <label asp-for="Filter.PageSize" class="form-label">Rows</label>
+                    <select asp-for="Filter.PageSize" class="form-control">
+                        @foreach (var size in Model.PageSizeOptions)
+                        {
+                            <option value="@size">@size</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn signup-btn">Update</button>
+                </form>
+                <div class="pagination-actions">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a asp-page="/Dashboard/Transactions" asp-all-route-data="Model.PreviousPageRoute" class="btn signup-btn">Previous</a>
+                    }
+                    else
+                    {
+                        <span class="btn signup-btn pagination-disabled">Previous</span>
+                    }
+                    <span class="pagination-page">Page @Model.CurrentPage of @Model.TotalPages</span>
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a asp-page="/Dashboard/Transactions" asp-all-route-data="Model.NextPageRoute" class="btn signup-btn">Next</a>
+                    }
+                    else
+                    {
+                        <span class="btn signup-btn pagination-disabled">Next</span>
+                    }
+                </div>
+            </div>
+        }
     </section>
 </section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

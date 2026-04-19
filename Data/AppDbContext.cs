@@ -11,12 +11,27 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<RecurringTransaction> RecurringTransactions => Set<RecurringTransaction>();
+    public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
         b.Entity<AppUser>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        b.Entity<AppUser>()
+            .Property(u => u.MonthlySavingsGoal)
+            .HasPrecision(18, 2);
+
+        b.Entity<Category>(e =>
+        {
+            e.HasOne(c => c.User)
+                .WithMany(u => u.Categories)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(c => new { c.UserId, c.Name }).IsUnique();
+        });
 
         b.Entity<Transaction>(e =>
         {
@@ -44,6 +59,31 @@ public class AppDbContext : DbContext
                 .HasForeignKey(x => x.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => new { x.UserId, x.CategoryId, x.Year, x.Month }).IsUnique();
+        });
+
+        b.Entity<RecurringTransaction>(e =>
+        {
+            e.Property(x => x.Amount).HasPrecision(18, 2);
+            e.HasOne(x => x.User)
+                .WithMany(u => u.RecurringTransactions)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Category)
+                .WithMany()
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => new { x.UserId, x.IsActive });
+        });
+
+        b.Entity<SavingsGoal>(e =>
+        {
+            e.Property(x => x.TargetAmount).HasPrecision(18, 2);
+            e.Property(x => x.CurrentAmount).HasPrecision(18, 2);
+            e.HasOne(x => x.User)
+                .WithMany(u => u.SavingsGoals)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.UserId, x.Name }).IsUnique();
         });
     }
 }

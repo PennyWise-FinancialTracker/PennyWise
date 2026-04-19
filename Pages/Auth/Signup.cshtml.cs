@@ -1,30 +1,77 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using PennyWise.Data;
+using PennyWise.Data.Entities;
 
 namespace PennyWise.Pages.Auth;
 
 public class SignupModel : PageModel
 {
+    private readonly AppDbContext _db;
+    private readonly IPasswordHasher<AppUser> _passwordHasher;
+
+    public SignupModel(AppDbContext db, IPasswordHasher<AppUser> passwordHasher)
+    {
+        _db = db;
+        _passwordHasher = passwordHasher;
+    }
+
     [BindProperty]
     public SignupInput Input { get; set; } = new();
 
     [TempData]
     public string? Message { get; set; }
 
-    public void OnGet()
+    public IActionResult OnGet()
     {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToPage("/Dashboard/Overview");
+        }
+
+        return Page();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
         {
             return Page();
         }
 
-        Message = $"Account created for {Input.Email}. You can sign in now.";
-        return RedirectToPage("/Auth/Login");
+        var email = Input.Email.Trim().ToLowerInvariant();
+        var existingUser = await _db.Users.AnyAsync(u => u.Email == email);
+        if (existingUser)
+        {
+            ModelState.AddModelError("Input.Email", "An account with this email already exists.");
+            return Page();
+        }
+
+        var user = new AppUser
+        {
+            Email = email,
+            FullName = Input.FullName.Trim(),
+        };
+        user.PasswordHash = _passwordHasher.HashPassword(user, Input.Password);
+
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            AppUserClaims.Create(user),
+            new AuthenticationProperties
+            {
+                IsPersistent = false,
+                AllowRefresh = true,
+            });
+
+        return RedirectToPage("/Dashboard/Overview");
     }
 
     public class SignupInput
