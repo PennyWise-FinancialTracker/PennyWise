@@ -1,0 +1,11 @@
+bin/
+obj/
+temp-build/
+
+*.db
+*.db-shm
+*.db-wal
+
+appsettings.Development.json
+
+.DS_Store
