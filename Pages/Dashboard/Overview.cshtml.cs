@@ -1,43 +1,93 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using PennyWise.Data;
+using PennyWise.Data.Entities;
 using PennyWise.Models;
 
 namespace PennyWise.Pages.Dashboard;
 
 public class OverviewModel : PageModel
 {
+    private readonly AppDbContext _db;
+
+    public OverviewModel(AppDbContext db) => _db = db;
+
     public string LastUpdated { get; set; } = string.Empty;
     public List<MetricItem> Metrics { get; set; } = new();
     public List<SpendingCategory> SpendingCategories { get; set; } = new();
     public List<RecentTransaction> RecentTransactions { get; set; } = new();
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        LastUpdated = "Updated March 12, 2026";
+        LastUpdated = $"Updated {DateTime.Now:MMMM d, yyyy}";
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == DbInitializer.DemoUserEmail);
+        if (user is null) return;
+
+        var now = DateTime.UtcNow;
+        var monthStart = new DateTime(now.Year, now.Month, 1);
+
+        var monthTxns = await _db.Transactions
+            .Where(t => t.UserId == user.Id && t.Date >= monthStart)
+            .Include(t => t.Category)
+            .ToListAsync();
+
+        var income = monthTxns.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);
+        var expenses = monthTxns.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount);
+        var balance = income - expenses;
+        var savings = balance > 0 ? balance : 0m;
 
         Metrics = new List<MetricItem>
         {
-            new() { Label = "Total Income",   Value = "$5,000", Trend = "+12%",  TrendDirection = "good", Icon = "+", IconStyle = "income" },
-            new() { Label = "Total Expenses", Value = "$3,600", Trend = "+8%",   TrendDirection = "bad",  Icon = "-", IconStyle = "expense" },
-            new() { Label = "Balance",        Value = "$1,400", Trend = "Current", TrendDirection = "",   Icon = "=", IconStyle = "balance" },
-            new() { Label = "Savings",        Value = "$1,400", Trend = "+15%",  TrendDirection = "good", Icon = "S", IconStyle = "savings" },
+            new() { Label = "Total Income",   Value = FormatMoney(income),   Trend = "This month", TrendDirection = "good", Icon = "+", IconStyle = "income" },
+            new() { Label = "Total Expenses", Value = FormatMoney(expenses), Trend = "This month", TrendDirection = "bad",  Icon = "-", IconStyle = "expense" },
+            new() { Label = "Balance",        Value = FormatMoney(balance),  Trend = "Current",    TrendDirection = "",     Icon = "=", IconStyle = "balance" },
+            new() { Label = "Savings",        Value = FormatMoney(savings),  Trend = "This month", TrendDirection = "good", Icon = "S", IconStyle = "savings" },
         };
 
-        SpendingCategories = new List<SpendingCategory>
-        {
-            new() { Name = "Food & Dining",   Color = "#4f46e5", Amount = 850 },
-            new() { Name = "Transportation",  Color = "#14b8a6", Amount = 420 },
-            new() { Name = "Shopping",         Color = "#9aa8f5", Amount = 680 },
-            new() { Name = "Utilities",        Color = "#f4a300", Amount = 380 },
-            new() { Name = "Entertainment",    Color = "#ea4c89", Amount = 270 },
-        };
+        SpendingCategories = monthTxns
+            .Where(t => t.Type == TransactionType.Expense && t.Category != null)
+            .GroupBy(t => t.Category!)
+            .Select(g => new SpendingCategory
+            {
+                Name = g.Key.Name,
+                Color = g.Key.Color,
+                Amount = g.Sum(t => t.Amount),
+            })
+            .OrderByDescending(c => c.Amount)
+            .Take(5)
+            .ToList();
 
-        RecentTransactions = new List<RecentTransaction>
+        var recent = await _db.Transactions
+            .Where(t => t.UserId == user.Id)
+            .Include(t => t.Category)
+            .OrderByDescending(t => t.Date)
+            .Take(5)
+            .ToListAsync();
+
+        RecentTransactions = recent.Select(t => new RecentTransaction
         {
-            new() { IconLetter = "C", IsIncome = false, Title = "Grocery Store",  Category = "Food & Dining",   Amount = "$85.50",    When = "Today" },
-            new() { IconLetter = "I", IsIncome = true,  Title = "Salary Deposit", Category = "Income",          Amount = "+$5000.00", When = "Yesterday" },
-            new() { IconLetter = "U", IsIncome = false, Title = "Electric Bill",  Category = "Utilities",       Amount = "$120.00",   When = "2 days ago" },
-            new() { IconLetter = "T", IsIncome = false, Title = "Gas Station",    Category = "Transportation",  Amount = "$45.00",    When = "3 days ago" },
-            new() { IconLetter = "F", IsIncome = false, Title = "Restaurant",     Category = "Food & Dining",   Amount = "$68.00",    When = "3 days ago" },
+            IconLetter = t.Category?.Icon ?? t.Description[..1].ToUpper(),
+            IsIncome = t.Type == TransactionType.Income,
+            Title = t.Description,
+            Category = t.Category?.Name ?? string.Empty,
+            Amount = (t.Type == TransactionType.Income ? "+" : string.Empty) + FormatMoney(t.Amount),
+            When = RelativeWhen(t.Date),
+        }).ToList();
+    }
+
+    private static string FormatMoney(decimal v) => v.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+
+    private static string RelativeWhen(DateTime date)
+    {
+        var days = (int)(DateTime.UtcNow.Date - date.Date).TotalDays;
+        return days switch
+        {
+            <= 0 => "Today",
+            1 => "Yesterday",
+            < 7 => $"{days} days ago",
+            < 30 => $"{days / 7} weeks ago",
+            _ => date.ToString("MMM d"),
         };
     }
 }
