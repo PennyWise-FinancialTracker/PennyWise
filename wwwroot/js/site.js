@@ -93,6 +93,26 @@
     });
   }
 
+  function bindTxManageToggles() {
+    document.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-tx-toggle]');
+      if (!trigger) return;
+      event.preventDefault();
+      var key = trigger.getAttribute('data-tx-toggle');
+      var panel = document.querySelector('[data-tx-manage="' + key + '"]');
+      if (!panel) return;
+      var triggers = document.querySelectorAll('[data-tx-toggle="' + key + '"].manage-btn');
+      var open = panel.hasAttribute('hidden');
+      if (open) {
+        panel.removeAttribute('hidden');
+        triggers.forEach(function (t) { t.style.display = 'none'; });
+      } else {
+        panel.setAttribute('hidden', '');
+        triggers.forEach(function (t) { t.style.display = ''; });
+      }
+    });
+  }
+
   function bindFillSelects() {
     document.querySelectorAll('select[data-fills]').forEach(function (select) {
       select.addEventListener('change', function () {
@@ -114,5 +134,6 @@
     animateProgressBars();
     bindChartTooltips();
     bindFillSelects();
+    bindTxManageToggles();
   });
 })();

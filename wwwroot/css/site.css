@@ -1118,7 +1118,7 @@ textarea {
 }
 
 .transactions-table thead th {
-  padding: 1rem 1.5rem;
+  padding: 0.85rem 0.75rem;
   color: var(--pw-text-soft);
   font-size: 0.82rem;
   letter-spacing: 0.08em;
@@ -1127,9 +1127,14 @@ textarea {
 }
 
 .transactions-table tbody td {
-  padding: 1rem 1.5rem;
+  padding: 0.85rem 0.75rem;
   border-bottom: 1px solid var(--pw-border);
   vertical-align: middle;
+}
+
+.tx-manage-row > td {
+  padding: 0.5rem 0.75rem 1rem;
+  background: var(--pw-surface-muted);
 }
 
 .transactions-table tbody tr:last-child td {
@@ -1294,56 +1299,102 @@ textarea {
   }
 }
 
-.row-manage {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
-  width: clamp(22rem, 70vw, 42rem);
+.manage-btn {
+  background: var(--pw-primary);
+  color: #fff;
+  border: 0;
+  border-radius: 0.7rem;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+}
+
+.manage-btn:hover {
+  background: var(--pw-primary-dark);
+  color: #fff;
+}
+
+.cancel-btn {
+  border: 1px solid var(--pw-border);
+  background: var(--pw-surface);
+  color: var(--pw-text);
+  border-radius: 0.7rem;
+  padding: 0.55rem 1rem;
+  font-weight: 700;
+}
+
+.cancel-btn:hover {
+  background: var(--pw-surface-muted);
+}
+
+.manage-panel {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
   background: var(--pw-surface);
   border: 1px solid var(--pw-border);
-  border-radius: 14px;
-  box-shadow: var(--pw-shadow);
-  z-index: 10;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(25, 35, 68, 0.04);
 }
 
-.row-manage__grid {
+.transactions-cards .manage-panel {
+  margin-top: 0.75rem;
+}
+
+.manage-panel__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
-  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.6rem 0.75rem;
 }
 
-.row-manage__actions {
+.manage-panel__grid--allocate {
+  grid-template-columns: minmax(160px, 1.2fr) minmax(120px, 0.8fr);
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--pw-border);
+}
+
+.manage-field {
   display: flex;
-  gap: 0.6rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--pw-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.manage-field .form-control {
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--pw-text);
+}
+
+.manage-panel__actions {
+  display: flex;
+  gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  padding-top: 0.25rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--pw-border);
 }
 
-.row-manage__actions .btn {
+.manage-panel__actions .btn {
   min-width: 6rem;
-  text-align: center;
 }
 
 @media (max-width: 700px) {
-  .row-manage {
-    position: static;
-    width: 100%;
-  }
-  .row-manage__grid {
+  .manage-panel__grid,
+  .manage-panel__grid--allocate {
     grid-template-columns: 1fr;
   }
-  .row-manage__actions {
+  .manage-panel__actions {
     justify-content: stretch;
   }
-  .row-manage__actions .btn {
+  .manage-panel__actions .btn {
     flex: 1;
   }
 }
