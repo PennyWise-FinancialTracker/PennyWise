@@ -558,6 +558,36 @@ public class TransactionsModel : DashboardPageModel
         };
     }
 
+    private async Task<List<AccountOption>> BuildAccountOptionsAsync(int userId)
+    {
+        var accounts = await _db.Accounts
+            .Where(a => a.UserId == userId && !a.IsArchived)
+            .OrderBy(a => a.Name)
+            .Select(a => new { a.Id, a.Name, a.Color, a.OpeningBalance })
+            .ToListAsync();
+
+        if (accounts.Count == 0) return new List<AccountOption>();
+
+        var totals = await _db.Transactions
+            .Where(t => t.UserId == userId && t.AccountId != null)
+            .GroupBy(t => new { t.AccountId, t.Type })
+            .Select(g => new { g.Key.AccountId, g.Key.Type, Sum = g.Sum(t => t.Amount) })
+            .ToListAsync();
+
+        return accounts.Select(a =>
+        {
+            var income = totals.Where(t => t.AccountId == a.Id && t.Type == TransactionType.Income).Sum(t => t.Sum);
+            var expense = totals.Where(t => t.AccountId == a.Id && t.Type == TransactionType.Expense).Sum(t => t.Sum);
+            return new AccountOption
+            {
+                Id = a.Id,
+                Name = a.Name,
+                Color = a.Color,
+                Balance = a.OpeningBalance + income - expense,
+            };
+        }).ToList();
+    }
+
     private async Task LoadPageAsync(int userId)
     {
         var selectedMonth = ResolveSelectedMonth();
@@ -573,11 +603,7 @@ public class TransactionsModel : DashboardPageModel
             .Select(c => new CategoryOption { Id = c.Id, Name = c.Name, Color = c.Color, IsDefault = c.IsDefault })
             .ToListAsync();
 
-        AccountOptions = await _db.Accounts
-            .Where(a => a.UserId == userId && !a.IsArchived)
-            .OrderBy(a => a.Name)
-            .Select(a => new AccountOption { Id = a.Id, Name = a.Name, Color = a.Color })
-            .ToListAsync();
+        AccountOptions = await BuildAccountOptionsAsync(userId);
 
         GoalOptions = await _db.SavingsGoals
             .Where(g => g.UserId == userId)
@@ -632,12 +658,12 @@ public class TransactionsModel : DashboardPageModel
         NormalizePagination();
         TotalTransactions = await query.CountAsync();
         TotalPages = Math.Max(1, (int)Math.Ceiling(TotalTransactions / (double)Filter.PageSize));
-        if (Filter.Page > TotalPages)
+        if (Filter.PageNumber > TotalPages)
         {
-            Filter.Page = TotalPages;
+            Filter.PageNumber = TotalPages;
         }
 
-        CurrentPage = Filter.Page;
+        CurrentPage = Filter.PageNumber;
         ShowingFrom = TotalTransactions == 0 ? 0 : ((CurrentPage - 1) * Filter.PageSize) + 1;
         ShowingTo = Math.Min(TotalTransactions, CurrentPage * Filter.PageSize);
         PreviousPageRoute = BuildPageRoute(Math.Max(1, CurrentPage - 1));
@@ -719,7 +745,7 @@ public class TransactionsModel : DashboardPageModel
         {
             ["Month"] = Month.GetValueOrDefault(DateTime.Today.Month).ToString(CultureInfo.InvariantCulture),
             ["Year"] = Year.GetValueOrDefault(DateTime.Today.Year).ToString(CultureInfo.InvariantCulture),
-            ["Filter.Page"] = page.ToString(CultureInfo.InvariantCulture),
+            ["Filter.PageNumber"] = page.ToString(CultureInfo.InvariantCulture),
             ["Filter.PageSize"] = Filter.PageSize.ToString(CultureInfo.InvariantCulture),
             ["Filter.Sort"] = Filter.Sort,
         };
@@ -740,9 +766,9 @@ public class TransactionsModel : DashboardPageModel
             Filter.PageSize = 10;
         }
 
-        if (Filter.Page < 1)
+        if (Filter.PageNumber < 1)
         {
-            Filter.Page = 1;
+            Filter.PageNumber = 1;
         }
     }
 
@@ -1454,7 +1480,7 @@ public class TransactionsModel : DashboardPageModel
         public DateTime? DateTo { get; set; }
 
         public string Sort { get; set; } = "date_desc";
-        public int Page { get; set; } = 1;
+        public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }
 

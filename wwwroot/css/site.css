@@ -181,14 +181,14 @@ textarea {
 }
 
 .app-shell {
-  max-width: 1400px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: clamp(0.7rem, 0.5rem + 0.6vw, 0.9rem) clamp(0.85rem, 0.5rem + 1.6vw, 1.5rem);
+  padding: clamp(0.7rem, 0.5rem + 0.6vw, 0.9rem) clamp(0.6rem, 0.3rem + 0.9vw, 1rem);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas: "brand menu actions";
   align-items: center;
-  column-gap: clamp(0.75rem, 0.4rem + 1.1vw, 1.25rem);
+  column-gap: clamp(1.25rem, 0.5rem + 1.6vw, 2.25rem);
   row-gap: 0.6rem;
 }
 
@@ -220,12 +220,18 @@ textarea {
 }
 
 .app-brand__text {
-  font-size: clamp(1rem, 0.7rem + 1.1vw, 1.8rem);
+  font-size: clamp(0.95rem, 0.6rem + 0.9vw, 1.5rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 1180px) {
+  .app-brand__text {
+    display: none;
+  }
 }
 
 .app-shell__menu,

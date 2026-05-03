@@ -93,9 +93,26 @@
     });
   }
 
+  function bindFillSelects() {
+    document.querySelectorAll('select[data-fills]').forEach(function (select) {
+      select.addEventListener('change', function () {
+        var target = document.querySelector(select.getAttribute('data-fills'));
+        if (!target) return;
+        var opt = select.options[select.selectedIndex];
+        var fillValue = opt && opt.getAttribute('data-fill-value');
+        if (!fillValue) return;
+        var current = parseFloat(target.value);
+        if (target.value === '' || isNaN(current) || current === 0) {
+          target.value = fillValue;
+        }
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     bindThemeToggles();
     animateProgressBars();
     bindChartTooltips();
+    bindFillSelects();
   });
 })();

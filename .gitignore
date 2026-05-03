@@ -9,3 +9,5 @@ temp-build/
 appsettings.Development.json
 
 .DS_Store
+
+.claude/

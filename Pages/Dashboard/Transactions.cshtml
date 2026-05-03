@@ -60,11 +60,11 @@
                 </div>
                 <div>
                     <label asp-for="Input.AccountId" class="form-label">Account</label>
-                    <select asp-for="Input.AccountId" class="form-control">
-                        <option value="">Unassigned</option>
+                    <select asp-for="Input.AccountId" class="form-control" data-fills="#Input_Amount">
+                        <option value="" data-fill-value="">Unassigned</option>
                         @foreach (var account in Model.AccountOptions)
                         {
-                            <option value="@account.Id">@account.Name</option>
+                            <option value="@account.Id" data-fill-value="@account.Balance.ToString("0.00")">@account.Name (@account.Balance.ToString("C0"))</option>
                         }
                     </select>
                 </div>
@@ -304,7 +304,7 @@
         <form method="get" class="transactions-toolbar transactions-toolbar--filters">
             <input type="hidden" asp-for="Month" />
             <input type="hidden" asp-for="Year" />
-            <input type="hidden" name="Filter.Page" value="1" />
+            <input type="hidden" name="Filter.PageNumber" value="1" />
             <input type="hidden" asp-for="Filter.PageSize" />
             <div class="filter-field filter-field--search search-box">
                 <label asp-for="Filter.Search" class="form-label">Search</label>
@@ -553,7 +553,7 @@
                     <input type="hidden" asp-for="Filter.DateFrom" />
                     <input type="hidden" asp-for="Filter.DateTo" />
                     <input type="hidden" asp-for="Filter.Sort" />
-                    <input type="hidden" name="Filter.Page" value="1" />
+                    <input type="hidden" name="Filter.PageNumber" value="1" />
                     <label asp-for="Filter.PageSize" class="form-label">Rows</label>
                     <select asp-for="Filter.PageSize" class="form-control">
                         @foreach (var size in Model.PageSizeOptions)
