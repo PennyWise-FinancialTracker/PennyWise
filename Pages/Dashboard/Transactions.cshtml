@@ -413,78 +413,80 @@
                         <tr class="tx-manage-row" data-tx-manage="@tx.Id" hidden>
                             <td colspan="7">
                                 <div class="manage-panel">
-                                    <div class="manage-panel__grid">
-                                        <form id="tx-edit-@tx.Id" method="post" asp-page-handler="Edit" class="manage-panel__form">
-                                            <input type="hidden" name="id" value="@tx.Id" />
-                                            <input type="hidden" name="Month" value="@Model.Month" />
-                                            <input type="hidden" name="Year" value="@Model.Year" />
-                                            <label class="manage-field">
-                                                <span>Date</span>
-                                                <input class="form-control" type="date" name="date" value="@tx.RawDate.ToString("yyyy-MM-dd")" />
-                                            </label>
-                                            <label class="manage-field">
-                                                <span>Description</span>
-                                                <input class="form-control" name="description" value="@tx.Description" />
-                                            </label>
-                                            <label class="manage-field">
-                                                <span>Category</span>
-                                                <select class="form-control" name="categoryId">
-                                                    @foreach (var category in Model.CategoryOptions)
-                                                    {
-                                                        <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
-                                                    }
-                                                </select>
-                                            </label>
-                                            <label class="manage-field">
-                                                <span>Account</span>
-                                                <select class="form-control" name="accountId">
-                                                    <option value="">Unassigned</option>
-                                                    @foreach (var account in Model.AccountOptions)
-                                                    {
-                                                        <option value="@account.Id" selected="@(account.Id == tx.AccountId ? "selected" : null)">@account.Name</option>
-                                                    }
-                                                </select>
-                                            </label>
-                                            <label class="manage-field">
-                                                <span>Type</span>
-                                                <select class="form-control" name="type">
-                                                    <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
-                                                    <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
-                                                </select>
-                                            </label>
-                                            <label class="manage-field">
-                                                <span>Amount</span>
-                                                <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
-                                            </label>
-                                        </form>
-
-                                        @if (tx.IsIncome && Model.GoalOptions.Count > 0)
-                                        {
-                                            <form id="tx-allocate-@tx.Id" method="post" asp-page-handler="Allocate" class="manage-panel__form">
-                                                <input type="hidden" name="Month" value="@Model.Month" />
-                                                <input type="hidden" name="Year" value="@Model.Year" />
-                                                <label class="manage-field">
-                                                    <span>Goal</span>
-                                                    <select class="form-control" name="goalId">
-                                                        @foreach (var goal in Model.GoalOptions)
-                                                        {
-                                                            <option value="@goal.Id">@goal.Name</option>
-                                                        }
-                                                    </select>
-                                                </label>
-                                                <label class="manage-field">
-                                                    <span>Allocate</span>
-                                                    <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
-                                                </label>
-                                            </form>
-                                        }
-                                    </div>
-
+                                    <form id="tx-edit-@tx.Id" method="post" asp-page-handler="Edit" hidden>
+                                        <input type="hidden" name="id" value="@tx.Id" />
+                                        <input type="hidden" name="Month" value="@Model.Month" />
+                                        <input type="hidden" name="Year" value="@Model.Year" />
+                                    </form>
                                     <form id="tx-delete-@tx.Id" method="post" asp-page-handler="Delete" hidden>
                                         <input type="hidden" name="id" value="@tx.Id" />
                                         <input type="hidden" name="Month" value="@Model.Month" />
                                         <input type="hidden" name="Year" value="@Model.Year" />
                                     </form>
+                                    @if (tx.IsIncome && Model.GoalOptions.Count > 0)
+                                    {
+                                        <form id="tx-allocate-@tx.Id" method="post" asp-page-handler="Allocate" hidden>
+                                            <input type="hidden" name="Month" value="@Model.Month" />
+                                            <input type="hidden" name="Year" value="@Model.Year" />
+                                        </form>
+                                    }
+
+                                    <div class="manage-panel__grid">
+                                        <label class="manage-field">
+                                            <span>Date</span>
+                                            <input form="tx-edit-@tx.Id" class="form-control" type="date" name="date" value="@tx.RawDate.ToString("yyyy-MM-dd")" />
+                                        </label>
+                                        <label class="manage-field">
+                                            <span>Description</span>
+                                            <input form="tx-edit-@tx.Id" class="form-control" name="description" value="@tx.Description" />
+                                        </label>
+                                        <label class="manage-field">
+                                            <span>Category</span>
+                                            <select form="tx-edit-@tx.Id" class="form-control" name="categoryId">
+                                                @foreach (var category in Model.CategoryOptions)
+                                                {
+                                                    <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
+                                                }
+                                            </select>
+                                        </label>
+                                        <label class="manage-field">
+                                            <span>Account</span>
+                                            <select form="tx-edit-@tx.Id" class="form-control" name="accountId">
+                                                <option value="">Unassigned</option>
+                                                @foreach (var account in Model.AccountOptions)
+                                                {
+                                                    <option value="@account.Id" selected="@(account.Id == tx.AccountId ? "selected" : null)">@account.Name</option>
+                                                }
+                                            </select>
+                                        </label>
+                                        <label class="manage-field">
+                                            <span>Type</span>
+                                            <select form="tx-edit-@tx.Id" class="form-control" name="type">
+                                                <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
+                                                <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
+                                            </select>
+                                        </label>
+                                        <label class="manage-field">
+                                            <span>Amount</span>
+                                            <input form="tx-edit-@tx.Id" class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                        </label>
+                                        @if (tx.IsIncome && Model.GoalOptions.Count > 0)
+                                        {
+                                            <label class="manage-field">
+                                                <span>Goal</span>
+                                                <select form="tx-allocate-@tx.Id" class="form-control" name="goalId">
+                                                    @foreach (var goal in Model.GoalOptions)
+                                                    {
+                                                        <option value="@goal.Id">@goal.Name</option>
+                                                    }
+                                                </select>
+                                            </label>
+                                            <label class="manage-field">
+                                                <span>Allocate</span>
+                                                <input form="tx-allocate-@tx.Id" class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                            </label>
+                                        }
+                                    </div>
 
                                     <div class="manage-panel__actions">
                                         <button type="submit" form="tx-edit-@tx.Id" class="btn login-btn">Save</button>
@@ -535,78 +537,80 @@
                         </div>
                         <button type="button" class="btn manage-btn" data-tx-toggle="card-@tx.Id">Manage</button>
                         <div class="manage-panel" data-tx-manage="card-@tx.Id" hidden>
-                            <div class="manage-panel__grid">
-                                <form id="tx-card-edit-@tx.Id" method="post" asp-page-handler="Edit" class="manage-panel__form">
-                                    <input type="hidden" name="id" value="@tx.Id" />
-                                    <input type="hidden" name="Month" value="@Model.Month" />
-                                    <input type="hidden" name="Year" value="@Model.Year" />
-                                    <label class="manage-field">
-                                        <span>Date</span>
-                                        <input class="form-control" type="date" name="date" value="@tx.RawDate.ToString("yyyy-MM-dd")" />
-                                    </label>
-                                    <label class="manage-field">
-                                        <span>Description</span>
-                                        <input class="form-control" name="description" value="@tx.Description" />
-                                    </label>
-                                    <label class="manage-field">
-                                        <span>Category</span>
-                                        <select class="form-control" name="categoryId">
-                                            @foreach (var category in Model.CategoryOptions)
-                                            {
-                                                <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
-                                            }
-                                        </select>
-                                    </label>
-                                    <label class="manage-field">
-                                        <span>Account</span>
-                                        <select class="form-control" name="accountId">
-                                            <option value="">Unassigned</option>
-                                            @foreach (var account in Model.AccountOptions)
-                                            {
-                                                <option value="@account.Id" selected="@(account.Id == tx.AccountId ? "selected" : null)">@account.Name</option>
-                                            }
-                                        </select>
-                                    </label>
-                                    <label class="manage-field">
-                                        <span>Type</span>
-                                        <select class="form-control" name="type">
-                                            <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
-                                            <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
-                                        </select>
-                                    </label>
-                                    <label class="manage-field">
-                                        <span>Amount</span>
-                                        <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
-                                    </label>
-                                </form>
-
-                                @if (tx.IsIncome && Model.GoalOptions.Count > 0)
-                                {
-                                    <form id="tx-card-allocate-@tx.Id" method="post" asp-page-handler="Allocate" class="manage-panel__form">
-                                        <input type="hidden" name="Month" value="@Model.Month" />
-                                        <input type="hidden" name="Year" value="@Model.Year" />
-                                        <label class="manage-field">
-                                            <span>Goal</span>
-                                            <select class="form-control" name="goalId">
-                                                @foreach (var goal in Model.GoalOptions)
-                                                {
-                                                    <option value="@goal.Id">@goal.Name</option>
-                                                }
-                                            </select>
-                                        </label>
-                                        <label class="manage-field">
-                                            <span>Allocate</span>
-                                            <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
-                                        </label>
-                                    </form>
-                                }
-                            </div>
-
+                            <form id="tx-card-edit-@tx.Id" method="post" asp-page-handler="Edit" hidden>
+                                <input type="hidden" name="id" value="@tx.Id" />
+                                <input type="hidden" name="Month" value="@Model.Month" />
+                                <input type="hidden" name="Year" value="@Model.Year" />
+                            </form>
                             <form id="tx-card-delete-@tx.Id" method="post" asp-page-handler="Delete" hidden>
                                 <input type="hidden" name="id" value="@tx.Id" />
                                 <input type="hidden" name="Month" value="@Model.Month" />
                                 <input type="hidden" name="Year" value="@Model.Year" />
                             </form>
+                            @if (tx.IsIncome && Model.GoalOptions.Count > 0)
+                            {
+                                <form id="tx-card-allocate-@tx.Id" method="post" asp-page-handler="Allocate" hidden>
+                                    <input type="hidden" name="Month" value="@Model.Month" />
+                                    <input type="hidden" name="Year" value="@Model.Year" />
+                                </form>
+                            }
+
+                            <div class="manage-panel__grid">
+                                <label class="manage-field">
+                                    <span>Date</span>
+                                    <input form="tx-card-edit-@tx.Id" class="form-control" type="date" name="date" value="@tx.RawDate.ToString("yyyy-MM-dd")" />
+                                </label>
+                                <label class="manage-field">
+                                    <span>Description</span>
+                                    <input form="tx-card-edit-@tx.Id" class="form-control" name="description" value="@tx.Description" />
+                                </label>
+                                <label class="manage-field">
+                                    <span>Category</span>
+                                    <select form="tx-card-edit-@tx.Id" class="form-control" name="categoryId">
+                                        @foreach (var category in Model.CategoryOptions)
+                                        {
+                                            <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
+                                        }
+                                    </select>
+                                </label>
+                                <label class="manage-field">
+                                    <span>Account</span>
+                                    <select form="tx-card-edit-@tx.Id" class="form-control" name="accountId">
+                                        <option value="">Unassigned</option>
+                                        @foreach (var account in Model.AccountOptions)
+                                        {
+                                            <option value="@account.Id" selected="@(account.Id == tx.AccountId ? "selected" : null)">@account.Name</option>
+                                        }
+                                    </select>
+                                </label>
+                                <label class="manage-field">
+                                    <span>Type</span>
+                                    <select form="tx-card-edit-@tx.Id" class="form-control" name="type">
+                                        <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
+                                        <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
+                                    </select>
+                                </label>
+                                <label class="manage-field">
+                                    <span>Amount</span>
+                                    <input form="tx-card-edit-@tx.Id" class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                </label>
+                                @if (tx.IsIncome && Model.GoalOptions.Count > 0)
+                                {
+                                    <label class="manage-field">
+                                        <span>Goal</span>
+                                        <select form="tx-card-allocate-@tx.Id" class="form-control" name="goalId">
+                                            @foreach (var goal in Model.GoalOptions)
+                                            {
+                                                <option value="@goal.Id">@goal.Name</option>
+                                            }
+                                        </select>
+                                    </label>
+                                    <label class="manage-field">
+                                        <span>Allocate</span>
+                                        <input form="tx-card-allocate-@tx.Id" class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                    </label>
+                                }
+                            </div>
 
                             <div class="manage-panel__actions">
                                 <button type="submit" form="tx-card-edit-@tx.Id" class="btn login-btn">Save</button>

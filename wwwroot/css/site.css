@@ -423,6 +423,21 @@ textarea {
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
 }
 
+select.form-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5l3.5 3.5 3.5-3.5' fill='none' stroke='%2361708c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 12px 12px;
+  padding-right: 2.25rem;
+}
+
+[data-theme="dark"] select.form-control {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5l3.5 3.5 3.5-3.5' fill='none' stroke='%239395ab' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
 .form-control[type="date"] {
   min-width: 10.25rem;
   padding-right: 2.35rem;
@@ -1346,10 +1361,6 @@ textarea {
   grid-template-columns: repeat(4, minmax(0, 200px));
   gap: 1.1rem 1.25rem;
   justify-content: center;
-}
-
-.manage-panel__form {
-  display: contents;
 }
 
 @media (max-width: 1100px) {
