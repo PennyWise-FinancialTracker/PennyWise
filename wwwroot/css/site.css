@@ -1293,6 +1293,50 @@ textarea {
   }
 }
 
+.row-manage {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: min(48rem, 92vw);
+  max-width: 100%;
+}
+
+.row-manage__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.row-manage__actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.row-manage__actions .btn {
+  min-width: 6.5rem;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .row-manage {
+    min-width: 0;
+  }
+  .row-manage__grid {
+    grid-template-columns: 1fr;
+  }
+  .row-manage__actions {
+    justify-content: stretch;
+  }
+  .row-manage__actions .btn {
+    flex: 1;
+  }
+}
+
 .inline-edit-form > .btn {
   justify-self: start;
 }
