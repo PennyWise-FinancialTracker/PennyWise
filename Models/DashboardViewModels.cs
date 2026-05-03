@@ -100,6 +100,8 @@ public class TransactionRow
     public string Description { get; set; } = string.Empty;
     public int CategoryId { get; set; }
     public string Category { get; set; } = string.Empty;
+    public int? AccountId { get; set; }
+    public string Account { get; set; } = string.Empty;
     public TransactionType Type { get; set; }
     public bool IsIncome { get; set; }
     public decimal RawAmount { get; set; }
@@ -112,6 +114,19 @@ public class CategoryOption
     public string Name { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
     public bool IsDefault { get; set; }
+}
+
+public class AccountOption
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+}
+
+public class GoalOption
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
 public class BudgetItem
@@ -156,11 +171,16 @@ public class RecurringTransactionRow
     public string Description { get; set; } = string.Empty;
     public int CategoryId { get; set; }
     public string Category { get; set; } = string.Empty;
+    public int? AccountId { get; set; }
+    public string Account { get; set; } = string.Empty;
     public TransactionType Type { get; set; }
     public bool IsIncome { get; set; }
     public decimal RawAmount { get; set; }
     public string Amount { get; set; } = string.Empty;
-    public int DayOfMonth { get; set; }
+    public RecurringFrequency Frequency { get; set; }
+    public string FrequencyLabel { get; set; } = string.Empty;
+    public DateTime StartDate { get; set; }
+    public string NextDue { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public string LastGenerated { get; set; } = "Never";
 }

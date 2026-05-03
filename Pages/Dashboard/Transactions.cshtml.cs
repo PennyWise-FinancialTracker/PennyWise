@@ -29,6 +29,8 @@ public class TransactionsModel : DashboardPageModel
     public string Period { get; set; } = string.Empty;
     public List<TransactionRow> Transactions { get; set; } = new();
     public List<CategoryOption> CategoryOptions { get; set; } = new();
+    public List<AccountOption> AccountOptions { get; set; } = new();
+    public List<GoalOption> GoalOptions { get; set; } = new();
     public TransactionInput Input { get; set; } = new();
     public string MonthLabel { get; set; } = string.Empty;
     public Dictionary<string, string> PreviousMonthRoute { get; set; } = new();
@@ -100,10 +102,18 @@ public class TransactionsModel : DashboardPageModel
             return Page();
         }
 
+        if (input.AccountId.HasValue && !await _db.Accounts.AnyAsync(a => a.Id == input.AccountId.Value && a.UserId == userId && !a.IsArchived))
+        {
+            ModelState.AddModelError("Input.AccountId", "Choose a valid account.");
+            await LoadPageAsync(userId);
+            return Page();
+        }
+
         _db.Transactions.Add(new Transaction
         {
             UserId = userId,
             CategoryId = input.CategoryId,
+            AccountId = input.AccountId,
             Amount = input.Amount,
             Description = input.Description.Trim(),
             Type = input.Type,
@@ -116,6 +126,7 @@ public class TransactionsModel : DashboardPageModel
         {
             Filter.Search,
             Filter.CategoryId,
+            Filter.AccountId,
             Filter.Type,
             Filter.DateFrom,
             Filter.DateTo,
@@ -130,6 +141,7 @@ public class TransactionsModel : DashboardPageModel
         DateTime date,
         string description,
         int categoryId,
+        int? accountId,
         TransactionType type,
         decimal amount)
     {
@@ -145,15 +157,17 @@ public class TransactionsModel : DashboardPageModel
             return RedirectToPage(new { Month, Year });
         }
 
-        if (amount <= 0 || string.IsNullOrWhiteSpace(description) || !await CategoryIsVisibleAsync(userId, categoryId))
+        if (amount <= 0 || string.IsNullOrWhiteSpace(description) || !await CategoryIsVisibleAsync(userId, categoryId) ||
+            (accountId.HasValue && !await _db.Accounts.AnyAsync(a => a.Id == accountId.Value && a.UserId == userId)))
         {
-            Message = "Transaction could not be updated. Check the amount, description, and category.";
+            Message = "Transaction could not be updated. Check the amount, description, category, and account.";
             return RedirectToPage(new { Month, Year });
         }
 
         transaction.Date = date.Date;
         transaction.Description = description.Trim();
         transaction.CategoryId = categoryId;
+        transaction.AccountId = accountId;
         transaction.Type = type;
         transaction.Amount = amount;
         await _db.SaveChangesAsync();
@@ -177,6 +191,117 @@ public class TransactionsModel : DashboardPageModel
             Message = "Transaction deleted.";
         }
 
+        return RedirectToPage(new { Month, Year });
+    }
+
+    public async Task<IActionResult> OnGetExportAsync()
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
+
+        var query = _db.Transactions
+            .Where(t => t.UserId == userId)
+            .Include(t => t.Category)
+            .Include(t => t.Account)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(Filter.Search))
+        {
+            var search = Filter.Search.Trim();
+            query = query.Where(t => t.Description.Contains(search) || (t.Category != null && t.Category.Name.Contains(search)));
+        }
+
+        if (Filter.CategoryId.HasValue)
+        {
+            query = query.Where(t => t.CategoryId == Filter.CategoryId.Value);
+        }
+
+        if (Filter.AccountId.HasValue)
+        {
+            query = query.Where(t => t.AccountId == Filter.AccountId.Value);
+        }
+
+        if (Filter.Type.HasValue)
+        {
+            query = query.Where(t => t.Type == Filter.Type.Value);
+        }
+
+        if (Filter.DateFrom.HasValue)
+        {
+            query = query.Where(t => t.Date >= Filter.DateFrom.Value.Date);
+        }
+
+        if (Filter.DateTo.HasValue)
+        {
+            query = query.Where(t => t.Date <= Filter.DateTo.Value.Date);
+        }
+
+        if (!Filter.DateFrom.HasValue && !Filter.DateTo.HasValue && Month.HasValue && Year.HasValue)
+        {
+            var monthStart = new DateTime(Year.Value, Month.Value, 1);
+            var monthEnd = monthStart.AddMonths(1);
+            query = query.Where(t => t.Date >= monthStart && t.Date < monthEnd);
+        }
+
+        var rows = await query.OrderBy(t => t.Date).ToListAsync();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Date,Description,Category,Account,Type,Amount");
+        foreach (var t in rows)
+        {
+            sb.Append(t.Date.ToString("yyyy-MM-dd", UsCulture));
+            sb.Append(',');
+            sb.Append(CsvEscape(t.Description));
+            sb.Append(',');
+            sb.Append(CsvEscape(t.Category?.Name ?? string.Empty));
+            sb.Append(',');
+            sb.Append(CsvEscape(t.Account?.Name ?? string.Empty));
+            sb.Append(',');
+            sb.Append(t.Type == TransactionType.Income ? "Income" : "Expense");
+            sb.Append(',');
+            sb.Append(t.Amount.ToString("0.00", UsCulture));
+            sb.Append('\n');
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+        var filename = $"pennywise-transactions-{DateTime.UtcNow:yyyyMMdd-HHmm}.csv";
+        return File(bytes, "text/csv", filename);
+    }
+
+    private static string CsvEscape(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        var needsQuoting = value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r');
+        if (!needsQuoting) return value;
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
+
+    public async Task<IActionResult> OnPostAllocateAsync(int goalId, decimal amount)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
+
+        if (amount <= 0)
+        {
+            Message = "Allocation amount must be greater than zero.";
+            return RedirectToPage(new { Month, Year });
+        }
+
+        var goal = await _db.SavingsGoals.FirstOrDefaultAsync(g => g.Id == goalId && g.UserId == userId);
+        if (goal is null)
+        {
+            Message = "Goal not found.";
+            return RedirectToPage(new { Month, Year });
+        }
+
+        goal.CurrentAmount += amount;
+        await _db.SaveChangesAsync();
+
+        Message = $"Allocated {amount.ToString("C2", UsCulture)} to {goal.Name}.";
         return RedirectToPage(new { Month, Year });
     }
 
@@ -229,12 +354,12 @@ public class TransactionsModel : DashboardPageModel
             return new ImportResult(0, 0, 0, 0);
         }
 
-        var existingKeys = (await _db.Transactions
+        var existingSignatures = (await _db.Transactions
                 .Where(t => t.UserId == userId)
                 .Select(t => new { t.Date, t.Description, t.Amount, t.Type })
                 .ToListAsync())
-            .Select(t => TransactionKey(t.Date, t.Description, t.Amount, t.Type))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            .Select(t => MakeDuplicateSignature(t.Date, t.Description, t.Amount, t.Type))
+            .ToList();
 
         var imported = 0;
         var skipped = 0;
@@ -253,21 +378,28 @@ public class TransactionsModel : DashboardPageModel
                 continue;
             }
 
-            var key = TransactionKey(importedRow.Date, importedRow.Description, importedRow.Amount, importedRow.Type);
-            if (!existingKeys.Add(key))
+            var candidate = MakeDuplicateSignature(importedRow.Date, importedRow.Description, importedRow.Amount, importedRow.Type);
+            if (IsFuzzyDuplicate(candidate, existingSignatures))
             {
                 skipped++;
                 continue;
             }
+            existingSignatures.Add(candidate);
 
             var categoryName = string.IsNullOrWhiteSpace(importedRow.CategoryName)
                 ? InferCategoryName(importedRow.Description, importedRow.Type)
                 : importedRow.CategoryName;
             var category = await FindOrCreateCategoryAsync(userId, categoryName, importedRow.Type == TransactionType.Income);
+
+            int? resolvedAccountId = importedRow.AccountId.HasValue && await _db.Accounts.AnyAsync(a => a.Id == importedRow.AccountId.Value && a.UserId == userId)
+                ? importedRow.AccountId
+                : null;
+
             _db.Transactions.Add(new Transaction
             {
                 UserId = userId,
                 CategoryId = category.Id,
+                AccountId = resolvedAccountId,
                 Amount = importedRow.Amount,
                 Description = importedRow.Description,
                 Type = importedRow.Type,
@@ -283,23 +415,26 @@ public class TransactionsModel : DashboardPageModel
 
     private async Task PrepareImportReviewAsync(int userId, StatementParseResult parsed)
     {
-        var existingKeys = (await _db.Transactions
+        var existingSignatures = (await _db.Transactions
                 .Where(t => t.UserId == userId)
                 .Select(t => new { t.Date, t.Description, t.Amount, t.Type })
                 .ToListAsync())
-            .Select(t => TransactionKey(t.Date, t.Description, t.Amount, t.Type))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            .Select(t => MakeDuplicateSignature(t.Date, t.Description, t.Amount, t.Type))
+            .ToList();
+
+        var defaultAccountId = AccountOptions.Count > 0 ? AccountOptions[0].Id : (int?)null;
 
         ImportRows = parsed.Rows.Select((row, index) =>
         {
-            var key = TransactionKey(row.Date, row.Description, row.Amount, row.Type);
-            var isDuplicate = existingKeys.Contains(key);
+            var candidate = MakeDuplicateSignature(row.Date, row.Description, row.Amount, row.Type);
+            var isDuplicate = IsFuzzyDuplicate(candidate, existingSignatures);
             return new ImportReviewInput
             {
                 Selected = !isDuplicate,
                 Date = row.Date,
                 Description = row.Description,
                 CategoryName = row.CategoryName,
+                AccountId = defaultAccountId,
                 Type = row.Type,
                 Amount = row.Amount,
                 IsDuplicate = isDuplicate,
@@ -438,9 +573,22 @@ public class TransactionsModel : DashboardPageModel
             .Select(c => new CategoryOption { Id = c.Id, Name = c.Name, Color = c.Color, IsDefault = c.IsDefault })
             .ToListAsync();
 
+        AccountOptions = await _db.Accounts
+            .Where(a => a.UserId == userId && !a.IsArchived)
+            .OrderBy(a => a.Name)
+            .Select(a => new AccountOption { Id = a.Id, Name = a.Name, Color = a.Color })
+            .ToListAsync();
+
+        GoalOptions = await _db.SavingsGoals
+            .Where(g => g.UserId == userId)
+            .OrderBy(g => g.Name)
+            .Select(g => new GoalOption { Id = g.Id, Name = g.Name })
+            .ToListAsync();
+
         var query = _db.Transactions
             .Where(t => t.UserId == userId)
             .Include(t => t.Category)
+            .Include(t => t.Account)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(Filter.Search))
@@ -452,6 +600,11 @@ public class TransactionsModel : DashboardPageModel
         if (Filter.CategoryId.HasValue)
         {
             query = query.Where(t => t.CategoryId == Filter.CategoryId.Value);
+        }
+
+        if (Filter.AccountId.HasValue)
+        {
+            query = query.Where(t => t.AccountId == Filter.AccountId.Value);
         }
 
         if (Filter.Type.HasValue)
@@ -503,6 +656,8 @@ public class TransactionsModel : DashboardPageModel
             Description = t.Description,
             CategoryId = t.CategoryId,
             Category = t.Category?.Name ?? string.Empty,
+            AccountId = t.AccountId,
+            Account = t.Account?.Name ?? string.Empty,
             Type = t.Type,
             IsIncome = t.Type == TransactionType.Income,
             RawAmount = t.Amount,
@@ -551,6 +706,7 @@ public class TransactionsModel : DashboardPageModel
 
         AddRouteValue(route, "Filter.Search", Filter.Search);
         AddRouteValue(route, "Filter.CategoryId", Filter.CategoryId?.ToString(CultureInfo.InvariantCulture));
+        AddRouteValue(route, "Filter.AccountId", Filter.AccountId?.ToString(CultureInfo.InvariantCulture));
         AddRouteValue(route, "Filter.Type", Filter.Type?.ToString());
         AddRouteValue(route, "Filter.Sort", Filter.Sort);
         AddRouteValue(route, "Filter.PageSize", Filter.PageSize.ToString(CultureInfo.InvariantCulture));
@@ -570,6 +726,7 @@ public class TransactionsModel : DashboardPageModel
 
         AddRouteValue(route, "Filter.Search", Filter.Search);
         AddRouteValue(route, "Filter.CategoryId", Filter.CategoryId?.ToString(CultureInfo.InvariantCulture));
+        AddRouteValue(route, "Filter.AccountId", Filter.AccountId?.ToString(CultureInfo.InvariantCulture));
         AddRouteValue(route, "Filter.Type", Filter.Type?.ToString());
         AddRouteValue(route, "Filter.DateFrom", Filter.DateFrom?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         AddRouteValue(route, "Filter.DateTo", Filter.DateTo?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
@@ -1001,9 +1158,8 @@ public class TransactionsModel : DashboardPageModel
             var daySpread = monthlyOccurrences.Max(t => t.Date.Day) - monthlyOccurrences.Min(t => t.Date.Day);
             if (daySpread > 7) continue;
 
+            var earliest = monthlyOccurrences[0];
             var latest = monthlyOccurrences[^1];
-            var days = monthlyOccurrences.Select(t => t.Date.Day).OrderBy(day => day).ToList();
-            var dayOfMonth = days[days.Count / 2];
 
             candidates.Add(new RecurringReviewInput
             {
@@ -1014,9 +1170,9 @@ public class TransactionsModel : DashboardPageModel
                 Amount = latest.Amount,
                 Description = latest.Description,
                 Type = latest.Type,
-                DayOfMonth = dayOfMonth,
-                LastGeneratedYear = latest.Date.Year,
-                LastGeneratedMonth = latest.Date.Month,
+                Frequency = RecurringFrequency.Monthly,
+                StartDate = earliest.Date,
+                LastGeneratedDate = latest.Date,
                 Occurrences = monthlyOccurrences.Count,
             });
         }
@@ -1053,10 +1209,10 @@ public class TransactionsModel : DashboardPageModel
                 Amount = candidate.Amount,
                 Description = candidate.Description.Trim(),
                 Type = candidate.Type,
-                DayOfMonth = Math.Clamp(candidate.DayOfMonth, 1, 31),
+                Frequency = candidate.Frequency,
+                StartDate = candidate.StartDate.Date,
+                LastGeneratedDate = candidate.LastGeneratedDate.Date,
                 IsActive = true,
-                LastGeneratedYear = candidate.LastGeneratedYear,
-                LastGeneratedMonth = candidate.LastGeneratedMonth,
             });
             created++;
         }
@@ -1120,6 +1276,53 @@ public class TransactionsModel : DashboardPageModel
 
     private static string TransactionKey(DateTime date, string description, decimal amount, TransactionType type) =>
         $"{date:yyyy-MM-dd}|{CleanDescription(description).ToLowerInvariant()}|{amount:0.00}|{(int)type}";
+
+    private record struct DuplicateSignature(DateTime Date, string Normalized, decimal Amount, TransactionType Type);
+
+    private static DuplicateSignature MakeDuplicateSignature(DateTime date, string description, decimal amount, TransactionType type) =>
+        new(date.Date, NormalizeForDuplicate(description), amount, type);
+
+    private static string NormalizeForDuplicate(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description)) return string.Empty;
+        var lower = description.ToLowerInvariant();
+        var keep = new StringBuilder(lower.Length);
+        foreach (var c in lower)
+        {
+            keep.Append(char.IsLetterOrDigit(c) ? c : ' ');
+        }
+        var tokens = keep.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Where(t => t.Length > 1 && !DuplicateNoiseWords.Contains(t));
+        return string.Join(' ', tokens);
+    }
+
+    private static readonly HashSet<string> DuplicateNoiseWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "pos", "debit", "card", "purchase", "payment", "online", "ach", "web",
+        "transaction", "withdrawal", "deposit", "checkcard", "visa", "mastercard",
+        "recurring", "autopay", "ref", "id", "no",
+    };
+
+    private static bool IsFuzzyDuplicate(DuplicateSignature candidate, IReadOnlyCollection<DuplicateSignature> existing)
+    {
+        foreach (var sig in existing)
+        {
+            if (sig.Amount != candidate.Amount) continue;
+            if (sig.Type != candidate.Type) continue;
+            if (Math.Abs((sig.Date - candidate.Date).TotalDays) > 2) continue;
+
+            if (string.IsNullOrEmpty(sig.Normalized) || string.IsNullOrEmpty(candidate.Normalized))
+            {
+                if (sig.Date == candidate.Date) return true;
+                continue;
+            }
+
+            if (sig.Normalized == candidate.Normalized) return true;
+            if (sig.Normalized.Contains(candidate.Normalized) ||
+                candidate.Normalized.Contains(sig.Normalized)) return true;
+        }
+        return false;
+    }
 
     private static bool TryParseType(string value, out TransactionType type)
     {
@@ -1241,6 +1444,7 @@ public class TransactionsModel : DashboardPageModel
     {
         public string? Search { get; set; }
         public int? CategoryId { get; set; }
+        public int? AccountId { get; set; }
         public TransactionType? Type { get; set; }
 
         [DataType(DataType.Date)]
@@ -1270,6 +1474,8 @@ public class TransactionsModel : DashboardPageModel
         [StringLength(64)]
         public string CategoryName { get; set; } = string.Empty;
 
+        public int? AccountId { get; set; }
+
         public TransactionType Type { get; set; }
 
         [Range(0.01, 999999999)]
@@ -1297,11 +1503,12 @@ public class TransactionsModel : DashboardPageModel
         [Range(0.01, 999999999)]
         public decimal Amount { get; set; }
 
-        [Range(1, 31)]
-        public int DayOfMonth { get; set; }
+        public RecurringFrequency Frequency { get; set; } = RecurringFrequency.Monthly;
 
-        public int LastGeneratedYear { get; set; }
-        public int LastGeneratedMonth { get; set; }
+        public DateTime StartDate { get; set; }
+
+        public DateTime LastGeneratedDate { get; set; }
+
         public int Occurrences { get; set; }
     }
 
@@ -1326,6 +1533,9 @@ public class TransactionsModel : DashboardPageModel
 
         [Range(1, int.MaxValue, ErrorMessage = "Choose a category.")]
         public int CategoryId { get; set; }
+
+        [Display(Name = "Account")]
+        public int? AccountId { get; set; }
 
         [Range(0.01, 999999999, ErrorMessage = "Amount must be greater than zero.")]
         public decimal Amount { get; set; }

@@ -20,7 +20,7 @@
             <div class="alert alert-success" role="alert">@Model.Message</div>
         }
 
-        <form method="post" novalidate>
+        <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
             <div class="mb-3">
@@ -41,6 +41,3 @@
     </div>
 </section>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

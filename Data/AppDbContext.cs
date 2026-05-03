@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Budget> Budgets => Set<Budget>();
     public DbSet<RecurringTransaction> RecurringTransactions => Set<RecurringTransaction>();
     public DbSet<SavingsGoal> SavingsGoals => Set<SavingsGoal>();
+    public DbSet<Account> Accounts => Set<Account>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -44,7 +45,21 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(t => t.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(t => t.Account)
+                .WithMany()
+                .HasForeignKey(t => t.AccountId)
+                .OnDelete(DeleteBehavior.SetNull);
             e.HasIndex(t => new { t.UserId, t.Date });
+        });
+
+        b.Entity<Account>(e =>
+        {
+            e.Property(x => x.OpeningBalance).HasPrecision(18, 2);
+            e.HasOne(x => x.User)
+                .WithMany(u => u.Accounts)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.UserId, x.Name }).IsUnique();
         });
 
         b.Entity<Budget>(e =>

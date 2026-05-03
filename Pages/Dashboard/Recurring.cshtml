@@ -10,10 +10,10 @@
         <div>
             <span class="dashboard__eyebrow">Recurring Activity</span>
             <h1>Recurring Transactions</h1>
-            <p>Create monthly income and bills, then generate due activity into your ledger.</p>
+            <p>Set up income and bills on weekly, monthly, or annual schedules. Due items run automatically each day.</p>
         </div>
         <form method="post" asp-page-handler="Generate">
-            <button class="dashboard__action action-button" type="submit">Generate due items</button>
+            <button class="dashboard__action action-button" type="submit">Run now</button>
         </form>
     </div>
 
@@ -49,12 +49,21 @@
                     <span asp-validation-for="Input.CategoryId" class="text-danger"></span>
                 </div>
                 <div>
+                    <label asp-for="Input.AccountId" class="form-label">Account</label>
+                    <select asp-for="Input.AccountId" class="form-control">
+                        <option value="">Unassigned</option>
+                        @foreach (var account in Model.AccountOptions)
+                        {
+                            <option value="@account.Id">@account.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
                     <label asp-for="Input.Type" class="form-label"></label>
                     <select asp-for="Input.Type" class="form-control">
                         <option value="@TransactionType.Expense">Expense</option>
                         <option value="@TransactionType.Income">Income</option>
                     </select>
-                    <span asp-validation-for="Input.Type" class="text-danger"></span>
                 </div>
                 <div>
                     <label asp-for="Input.Amount" class="form-label"></label>
@@ -62,9 +71,18 @@
                     <span asp-validation-for="Input.Amount" class="text-danger"></span>
                 </div>
                 <div>
-                    <label asp-for="Input.DayOfMonth" class="form-label"></label>
-                    <input asp-for="Input.DayOfMonth" class="form-control" type="number" min="1" max="31" />
-                    <span asp-validation-for="Input.DayOfMonth" class="text-danger"></span>
+                    <label asp-for="Input.Frequency" class="form-label">Frequency</label>
+                    <select asp-for="Input.Frequency" class="form-control">
+                        <option value="@RecurringFrequency.Weekly">Weekly</option>
+                        <option value="@RecurringFrequency.BiWeekly">Bi-weekly</option>
+                        <option value="@RecurringFrequency.Monthly">Monthly</option>
+                        <option value="@RecurringFrequency.Quarterly">Quarterly</option>
+                        <option value="@RecurringFrequency.Annual">Annual</option>
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="Input.StartDate" class="form-label"></label>
+                    <input asp-for="Input.StartDate" class="form-control" type="date" />
                 </div>
                 <div class="entry-form__action">
                     <button type="submit" class="btn login-btn">Add rule</button>
@@ -79,8 +97,9 @@
                 <tr>
                     <th>Description</th>
                     <th>Category</th>
-                    <th>Day</th>
-                    <th>Status</th>
+                    <th>Account</th>
+                    <th>Frequency</th>
+                    <th>Next Due</th>
                     <th>Last Generated</th>
                     <th class="amount-cell">Amount</th>
                     <th>Actions</th>
@@ -90,7 +109,7 @@
                 @if (Model.RecurringTransactions.Count == 0)
                 {
                     <tr>
-                        <td colspan="7">
+                        <td colspan="8">
                             <div class="empty-state">
                                 <div>Add monthly income or bills to generate recurring activity.</div>
                                 <div class="empty-state__actions">
@@ -107,8 +126,9 @@
                         <tr>
                             <td>@item.Description</td>
                             <td><span class="table-tag table-tag--category">@item.Category</span></td>
-                            <td>@item.DayOfMonth</td>
-                            <td>@(item.IsActive ? "Active" : "Paused")</td>
+                            <td>@item.Account</td>
+                            <td>@item.FrequencyLabel</td>
+                            <td>@item.NextDue</td>
                             <td>@item.LastGenerated</td>
                             <td class="amount-cell @(item.IsIncome ? "amount-cell--positive" : "")">@item.Amount</td>
                             <td>
@@ -123,12 +143,26 @@
                                                 <option value="@category.Id" selected="@(category.Id == item.CategoryId ? "selected" : null)">@category.Name</option>
                                             }
                                         </select>
+                                        <select class="form-control" name="accountId">
+                                            <option value="">Unassigned</option>
+                                            @foreach (var account in Model.AccountOptions)
+                                            {
+                                                <option value="@account.Id" selected="@(account.Id == item.AccountId ? "selected" : null)">@account.Name</option>
+                                            }
+                                        </select>
                                         <select class="form-control" name="type">
                                             <option value="@TransactionType.Expense" selected="@(item.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
                                             <option value="@TransactionType.Income" selected="@(item.Type == TransactionType.Income ? "selected" : null)">Income</option>
                                         </select>
                                         <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@item.RawAmount" />
-                                        <input class="form-control" type="number" min="1" max="31" name="dayOfMonth" value="@item.DayOfMonth" />
+                                        <select class="form-control" name="frequency">
+                                            <option value="@RecurringFrequency.Weekly" selected="@(item.Frequency == RecurringFrequency.Weekly ? "selected" : null)">Weekly</option>
+                                            <option value="@RecurringFrequency.BiWeekly" selected="@(item.Frequency == RecurringFrequency.BiWeekly ? "selected" : null)">Bi-weekly</option>
+                                            <option value="@RecurringFrequency.Monthly" selected="@(item.Frequency == RecurringFrequency.Monthly ? "selected" : null)">Monthly</option>
+                                            <option value="@RecurringFrequency.Quarterly" selected="@(item.Frequency == RecurringFrequency.Quarterly ? "selected" : null)">Quarterly</option>
+                                            <option value="@RecurringFrequency.Annual" selected="@(item.Frequency == RecurringFrequency.Annual ? "selected" : null)">Annual</option>
+                                        </select>
+                                        <input class="form-control" type="date" name="startDate" value="@item.StartDate.ToString("yyyy-MM-dd")" />
                                         <label class="form-check">
                                             <input class="form-check-input" type="checkbox" name="isActive" value="true" checked="@(item.IsActive ? "checked" : null)" />
                                             <span class="form-check-label">Active</span>
@@ -148,7 +182,3 @@
         </table>
     </section>
 </section>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

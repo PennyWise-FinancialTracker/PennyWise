@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PennyWise.Data;
 using PennyWise.Data.Entities;
+using PennyWise.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AddPageRoute("/Auth/Signup", "signup");
     options.Conventions.AddPageRoute("/Dashboard/Overview", "overview");
     options.Conventions.AddPageRoute("/Dashboard/Transactions", "transactions");
+    options.Conventions.AddPageRoute("/Dashboard/Accounts", "accounts");
     options.Conventions.AddPageRoute("/Dashboard/Budgets", "budgets");
     options.Conventions.AddPageRoute("/Dashboard/Categories", "categories");
     options.Conventions.AddPageRoute("/Dashboard/Recurring", "recurring");
@@ -52,13 +54,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
+builder.Services.AddHostedService<RecurringBackgroundService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
-    await DbInitializer.InitializeAsync(db, passwordHasher);
+    await DbInitializer.InitializeAsync(db);
 }
 
 // Configure the HTTP request pipeline.

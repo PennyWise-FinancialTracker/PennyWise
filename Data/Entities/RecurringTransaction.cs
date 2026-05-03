@@ -2,6 +2,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PennyWise.Data.Entities;
 
+public enum RecurringFrequency
+{
+    Weekly = 0,
+    BiWeekly = 1,
+    Monthly = 2,
+    Quarterly = 3,
+    Annual = 4,
+}
+
 public class RecurringTransaction
 {
     public int Id { get; set; }
@@ -12,6 +21,9 @@ public class RecurringTransaction
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
 
+    public int? AccountId { get; set; }
+    public Account? Account { get; set; }
+
     public decimal Amount { get; set; }
 
     [Required, MaxLength(256)]
@@ -19,12 +31,13 @@ public class RecurringTransaction
 
     public TransactionType Type { get; set; }
 
-    public int DayOfMonth { get; set; } = 1;
+    public RecurringFrequency Frequency { get; set; } = RecurringFrequency.Monthly;
+
+    public DateTime StartDate { get; set; } = DateTime.UtcNow.Date;
+
+    public DateTime? LastGeneratedDate { get; set; }
 
     public bool IsActive { get; set; } = true;
-
-    public int? LastGeneratedYear { get; set; }
-    public int? LastGeneratedMonth { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

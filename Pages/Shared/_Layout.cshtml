@@ -14,8 +14,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - PennyWise</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PennyWise.styles.css" asp-append-version="true" />
     <script>
@@ -38,6 +36,7 @@
                 <div class="app-shell__menu">
                     <a class="@NavState("/Dashboard/Overview")" asp-page="/Dashboard/Overview">Overview</a>
                     <a class="@NavState("/Dashboard/Transactions")" asp-page="/Dashboard/Transactions">Transactions</a>
+                    <a class="@NavState("/Dashboard/Accounts")" asp-page="/Dashboard/Accounts">Accounts</a>
                     <a class="@NavState("/Dashboard/Budgets")" asp-page="/Dashboard/Budgets">Budgets</a>
                     <a class="@NavState("/Dashboard/Categories")" asp-page="/Dashboard/Categories">Categories</a>
                     <a class="@NavState("/Dashboard/Recurring")" asp-page="/Dashboard/Recurring">Recurring</a>
@@ -83,8 +82,6 @@
         </footer>
     }
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

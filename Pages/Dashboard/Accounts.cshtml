@@ -1,0 +1,136 @@
+@page
+@model PennyWise.Pages.Dashboard.AccountsModel
+@using PennyWise.Data.Entities
+@{
+    ViewData["Title"] = "Accounts";
+}
+
+<section class="dashboard">
+    <div class="dashboard__header">
+        <div>
+            <span class="dashboard__eyebrow">Account Balances</span>
+            <h1>Accounts</h1>
+            <p>Track each checking, savings, credit card, cash stash, or investment account separately.</p>
+        </div>
+        <div class="dashboard__action">Net @Model.TotalBalance</div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-success" role="alert">@Model.Message</div>
+    }
+
+    <section class="data-entry-panel">
+        <div class="panel__header">
+            <div>
+                <h2>Add Account</h2>
+                <p>Set the opening balance to whatever the account holds today.</p>
+            </div>
+        </div>
+        <form method="post" asp-page-handler="Add" class="entry-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-grid form-grid--transactions">
+                <div>
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" placeholder="Chase Checking, Apple Card..." />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Type" class="form-label">Type</label>
+                    <select asp-for="Input.Type" class="form-control">
+                        <option value="@AccountType.Checking">Checking</option>
+                        <option value="@AccountType.Savings">Savings</option>
+                        <option value="@AccountType.Credit">Credit Card</option>
+                        <option value="@AccountType.Cash">Cash</option>
+                        <option value="@AccountType.Investment">Investment</option>
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="Input.OpeningBalance" class="form-label"></label>
+                    <input asp-for="Input.OpeningBalance" class="form-control" type="number" step="0.01" placeholder="0.00" />
+                </div>
+                <div>
+                    <label asp-for="Input.Icon" class="form-label"></label>
+                    <input asp-for="Input.Icon" class="form-control" maxlength="2" placeholder="C" />
+                </div>
+                <div>
+                    <label asp-for="Input.Color" class="form-label"></label>
+                    <input asp-for="Input.Color" class="form-control" placeholder="#4f46e5" />
+                </div>
+                <div class="entry-form__action">
+                    <button type="submit" class="btn login-btn">Add account</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="transactions-panel">
+        <table class="transactions-table">
+            <thead>
+                <tr>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th>Transactions</th>
+                    <th class="amount-cell">Balance</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Accounts.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div>No accounts yet. Add a checking, savings, or credit card account to start tracking balances.</div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var account in Model.Accounts)
+                    {
+                        <tr class="@(account.IsArchived ? "is-archived" : "")">
+                            <td>
+                                <span class="table-tag table-tag--category" style="background:@account.Color;color:#fff;border-color:transparent;">@account.Icon @account.Name</span>
+                            </td>
+                            <td>@account.TypeLabel</td>
+                            <td>@account.TransactionCount</td>
+                            <td class="amount-cell @(account.Balance >= 0 ? "amount-cell--positive" : "")">@account.BalanceFormatted</td>
+                            <td>@(account.IsArchived ? "Archived" : "Active")</td>
+                            <td>
+                                <details class="row-actions">
+                                    <summary>Edit</summary>
+                                    <form method="post" asp-page-handler="Edit" class="inline-edit-form">
+                                        <input type="hidden" name="id" value="@account.Id" />
+                                        <input class="form-control" name="name" value="@account.Name" />
+                                        <select class="form-control" name="type">
+                                            <option value="@AccountType.Checking" selected="@(account.Type == AccountType.Checking ? "selected" : null)">Checking</option>
+                                            <option value="@AccountType.Savings" selected="@(account.Type == AccountType.Savings ? "selected" : null)">Savings</option>
+                                            <option value="@AccountType.Credit" selected="@(account.Type == AccountType.Credit ? "selected" : null)">Credit Card</option>
+                                            <option value="@AccountType.Cash" selected="@(account.Type == AccountType.Cash ? "selected" : null)">Cash</option>
+                                            <option value="@AccountType.Investment" selected="@(account.Type == AccountType.Investment ? "selected" : null)">Investment</option>
+                                        </select>
+                                        <input class="form-control" type="number" step="0.01" name="openingBalance" value="@account.OpeningBalance" />
+                                        <input class="form-control" name="icon" value="@account.Icon" maxlength="2" />
+                                        <input class="form-control" name="color" value="@account.Color" />
+                                        <label class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="isArchived" value="true" checked="@(account.IsArchived ? "checked" : null)" />
+                                            <span class="form-check-label">Archived</span>
+                                        </label>
+                                        <button class="btn login-btn" type="submit">Save</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" class="inline-delete-form">
+                                        <input type="hidden" name="id" value="@account.Id" />
+                                        <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this account? Accounts with activity will be archived instead.')">Delete</button>
+                                    </form>
+                                </details>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </section>
+</section>

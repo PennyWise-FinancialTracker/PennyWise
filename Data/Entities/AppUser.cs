@@ -26,4 +26,5 @@ public class AppUser
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<RecurringTransaction> RecurringTransactions { get; set; } = new List<RecurringTransaction>();
     public ICollection<SavingsGoal> SavingsGoals { get; set; } = new List<SavingsGoal>();
+    public ICollection<Account> Accounts { get; set; } = new List<Account>();
 }

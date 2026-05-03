@@ -59,6 +59,16 @@
                     <span asp-validation-for="Input.CategoryId" class="text-danger"></span>
                 </div>
                 <div>
+                    <label asp-for="Input.AccountId" class="form-label">Account</label>
+                    <select asp-for="Input.AccountId" class="form-control">
+                        <option value="">Unassigned</option>
+                        @foreach (var account in Model.AccountOptions)
+                        {
+                            <option value="@account.Id">@account.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
                     <label asp-for="Input.Type" class="form-label"></label>
                     <select asp-for="Input.Type" class="form-control">
                         <option value="@TransactionType.Expense">Expense</option>
@@ -159,6 +169,7 @@
                                     <th>Date</th>
                                     <th>Description</th>
                                     <th>Category</th>
+                                    <th>Account</th>
                                     <th>Type</th>
                                     <th class="amount-cell">Amount</th>
                                     <th>Notes</th>
@@ -181,6 +192,15 @@
                                         <td><input asp-for="ImportRows[i].Date" class="form-control" type="date" /></td>
                                         <td><input asp-for="ImportRows[i].Description" class="form-control" /></td>
                                         <td><input asp-for="ImportRows[i].CategoryName" class="form-control" list="categoryNameOptions" /></td>
+                                        <td>
+                                            <select asp-for="ImportRows[i].AccountId" class="form-control">
+                                                <option value="">Unassigned</option>
+                                                @foreach (var account in Model.AccountOptions)
+                                                {
+                                                    <option value="@account.Id">@account.Name</option>
+                                                }
+                                            </select>
+                                        </td>
                                         <td>
                                             <select asp-for="ImportRows[i].Type" class="form-control">
                                                 <option value="@TransactionType.Expense">Expense</option>
@@ -225,7 +245,8 @@
                                             <th>Description</th>
                                             <th>Category</th>
                                             <th>Type</th>
-                                            <th>Day</th>
+                                            <th>Frequency</th>
+                                            <th>Start</th>
                                             <th class="amount-cell">Amount</th>
                                             <th>Seen</th>
                                         </tr>
@@ -235,8 +256,7 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    <input type="hidden" asp-for="RecurringCandidates[i].LastGeneratedYear" />
-                                                    <input type="hidden" asp-for="RecurringCandidates[i].LastGeneratedMonth" />
+                                                    <input type="hidden" asp-for="RecurringCandidates[i].LastGeneratedDate" />
                                                     <input type="hidden" asp-for="RecurringCandidates[i].Occurrences" />
                                                     <label class="form-check">
                                                         <input asp-for="RecurringCandidates[i].Selected" class="form-check-input" />
@@ -251,7 +271,16 @@
                                                         <option value="@TransactionType.Income">Income</option>
                                                     </select>
                                                 </td>
-                                                <td><input asp-for="RecurringCandidates[i].DayOfMonth" class="form-control" type="number" min="1" max="31" /></td>
+                                                <td>
+                                                    <select asp-for="RecurringCandidates[i].Frequency" class="form-control">
+                                                        <option value="@RecurringFrequency.Weekly">Weekly</option>
+                                                        <option value="@RecurringFrequency.BiWeekly">Bi-weekly</option>
+                                                        <option value="@RecurringFrequency.Monthly">Monthly</option>
+                                                        <option value="@RecurringFrequency.Quarterly">Quarterly</option>
+                                                        <option value="@RecurringFrequency.Annual">Annual</option>
+                                                    </select>
+                                                </td>
+                                                <td><input asp-for="RecurringCandidates[i].StartDate" class="form-control" type="date" /></td>
                                                 <td><input asp-for="RecurringCandidates[i].Amount" class="form-control amount-input" type="number" min="0.01" step="0.01" /></td>
                                                 <td>@Model.RecurringCandidates[i].Occurrences months</td>
                                             </tr>
@@ -292,6 +321,16 @@
                 </select>
             </div>
             <div class="filter-field">
+                <label asp-for="Filter.AccountId" class="form-label">Account</label>
+                <select asp-for="Filter.AccountId" class="form-control">
+                    <option value="">All accounts</option>
+                    @foreach (var account in Model.AccountOptions)
+                    {
+                        <option value="@account.Id">@account.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-field">
                 <label asp-for="Filter.Type" class="form-label">Type</label>
                 <select asp-for="Filter.Type" class="form-control">
                     <option value="">All types</option>
@@ -321,6 +360,7 @@
             </div>
             <div class="entry-form__action filter-actions">
                 <button type="submit" class="btn login-btn">Apply</button>
+                <button type="submit" formaction="?handler=Export" class="btn signup-btn">Export CSV</button>
                 <a asp-page="/Dashboard/Transactions" class="btn signup-btn">Reset</a>
             </div>
         </form>
@@ -331,6 +371,7 @@
                     <th>Date</th>
                     <th>Description</th>
                     <th>Category</th>
+                    <th>Account</th>
                     <th>Type</th>
                     <th class="amount-cell">Amount</th>
                     <th>Actions</th>
@@ -340,7 +381,7 @@
                 @if (Model.Transactions.Count == 0)
                 {
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <div>Add your first transaction or upload a statement to wake up the dashboard.</div>
                                 <div class="empty-state__actions">
@@ -358,6 +399,7 @@
                             <td>@tx.Date</td>
                             <td>@tx.Description</td>
                             <td><span class="table-tag table-tag--category">@tx.Category</span></td>
+                            <td>@(string.IsNullOrEmpty(tx.Account) ? "—" : tx.Account)</td>
                             <td>
                                 <span class="table-tag @(tx.IsIncome ? "table-tag--income" : "table-tag--expense")">
                                     @(tx.IsIncome ? "Income" : "Expense")
@@ -379,6 +421,13 @@
                                                 <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
                                             }
                                         </select>
+                                        <select class="form-control" name="accountId">
+                                            <option value="">Unassigned</option>
+                                            @foreach (var account in Model.AccountOptions)
+                                            {
+                                                <option value="@account.Id" selected="@(account.Id == tx.AccountId ? "selected" : null)">@account.Name</option>
+                                            }
+                                        </select>
                                         <select class="form-control" name="type">
                                             <option value="@TransactionType.Expense" selected="@(tx.Type == TransactionType.Expense ? "selected" : null)">Expense</option>
                                             <option value="@TransactionType.Income" selected="@(tx.Type == TransactionType.Income ? "selected" : null)">Income</option>
@@ -393,6 +442,24 @@
                                         <button class="btn danger-btn" type="submit" onclick="return confirm('Delete this transaction?')">Delete</button>
                                     </form>
                                 </details>
+                                @if (tx.IsIncome && Model.GoalOptions.Count > 0)
+                                {
+                                    <details class="row-actions">
+                                        <summary>Allocate</summary>
+                                        <form method="post" asp-page-handler="Allocate" class="inline-edit-form">
+                                            <input type="hidden" name="Month" value="@Model.Month" />
+                                            <input type="hidden" name="Year" value="@Model.Year" />
+                                            <select class="form-control" name="goalId">
+                                                @foreach (var goal in Model.GoalOptions)
+                                                {
+                                                    <option value="@goal.Id">@goal.Name</option>
+                                                }
+                                            </select>
+                                            <input class="form-control" type="number" min="0.01" step="0.01" name="amount" value="@tx.RawAmount" />
+                                            <button class="btn signup-btn" type="submit">Add to goal</button>
+                                        </form>
+                                    </details>
+                                }
                             </td>
                         </tr>
                     }
@@ -422,6 +489,10 @@
                         <div class="transaction-card__bottom">
                             <span class="transaction-card__date">@tx.Date</span>
                             <span class="table-tag table-tag--category">@tx.Category</span>
+                            @if (!string.IsNullOrEmpty(tx.Account))
+                            {
+                                <span class="table-tag">@tx.Account</span>
+                            }
                             <span class="table-tag @(tx.IsIncome ? "table-tag--income" : "table-tag--expense")">
                                 @(tx.IsIncome ? "Income" : "Expense")
                             </span>
@@ -438,6 +509,13 @@
                                     @foreach (var category in Model.CategoryOptions)
                                     {
                                         <option value="@category.Id" selected="@(category.Id == tx.CategoryId ? "selected" : null)">@category.Name</option>
+                                    }
+                                </select>
+                                <select class="form-control" name="accountId">
+                                    <option value="">Unassigned</option>
+                                    @foreach (var account in Model.AccountOptions)
+                                    {
+                                        <option value="@account.Id" selected="@(account.Id == tx.AccountId ? "selected" : null)">@account.Name</option>
                                     }
                                 </select>
                                 <select class="form-control" name="type">
@@ -470,6 +548,7 @@
                     <input type="hidden" asp-for="Year" />
                     <input type="hidden" asp-for="Filter.Search" />
                     <input type="hidden" asp-for="Filter.CategoryId" />
+                    <input type="hidden" asp-for="Filter.AccountId" />
                     <input type="hidden" asp-for="Filter.Type" />
                     <input type="hidden" asp-for="Filter.DateFrom" />
                     <input type="hidden" asp-for="Filter.DateTo" />
@@ -508,6 +587,3 @@
     </section>
 </section>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

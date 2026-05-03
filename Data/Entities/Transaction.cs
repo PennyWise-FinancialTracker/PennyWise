@@ -18,6 +18,9 @@ public class Transaction
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
 
+    public int? AccountId { get; set; }
+    public Account? Account { get; set; }
+
     public decimal Amount { get; set; }
 
     [Required, MaxLength(256)]
