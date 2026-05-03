@@ -37,8 +37,19 @@ public class OverviewModel : DashboardPageModel
 
         var income = monthTxns.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);
         var expenses = monthTxns.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount);
-        var balance = income - expenses;
-        var savings = balance > 0 ? balance : 0m;
+        var monthlyNet = income - expenses;
+        var savings = monthlyNet > 0 ? monthlyNet : 0m;
+
+        var openingTotal = await _db.Accounts
+            .Where(a => a.UserId == userId && !a.IsArchived)
+            .SumAsync(a => (decimal?)a.OpeningBalance) ?? 0m;
+        var lifetimeIncome = await _db.Transactions
+            .Where(t => t.UserId == userId && t.Type == TransactionType.Income)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+        var lifetimeExpense = await _db.Transactions
+            .Where(t => t.UserId == userId && t.Type == TransactionType.Expense)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+        var balance = openingTotal + lifetimeIncome - lifetimeExpense;
         var savingsTrend = user.MonthlySavingsGoal > 0
             ? $"{Math.Min(100, Math.Round(savings / user.MonthlySavingsGoal * 100))}% of goal"
             : "This month";
